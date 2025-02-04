@@ -14,15 +14,15 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
-3. Install requirements 
+3. Install initial requirements 
 
-    Since opencv-python needs cmake and scikit-build let's install them first
+    Since opencv-python needs cmake and scikit-build we'll install them first
 
 ```
 pip3 install cmake scikit-build
 ```
 
-    Now install the rest
+4. Now install the rest
 
 ```
 pip install -r requirements.txt
