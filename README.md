@@ -74,4 +74,7 @@ This is where you will use an AI model (just OpenAI is available for now) to ext
 
 4. Extract visual content by running: `python3 -m visual_scout.extract_visual_content` 
 
-    - This will send the grids produced in the previous step to OpenAI along with a prompt which asks it to return a json object containing everything it sees in the video. The output is individual files corresponding to individual grids, and one large json file that includes all visual elements, by timestamp. 
+    - This will send the grids produced in the previous step to OpenAI along with a prompt which asks it to return a json object containing everything it sees in the video. 
+    - The output is:
+        - An individual json file containing the visual elements for one individual grid file, and 
+        - One large json file that combines all the individual json files into one, associating each group of elements to their corresponding timestamp. 
