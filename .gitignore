@@ -1,10 +1,12 @@
 # Ignore everything inside output_*/
 output_frames/*
 output_grids/*
+output_visual_content/*
 
 # But keep the .gitkeep files
 !output_frames/.gitkeep
 !output_grids/.gitkeep
+!output_visual_content/.gitkeep
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
