@@ -76,7 +76,38 @@ def get_label_gen_prompt(image_path):
 
 
 def get_openai_labels(prompt):
-    """Call OpenAI API to get labels for the given image."""
+    """
+    Call the OpenAI API to generate labels for a given image based on the provided prompt.
+
+    This function sends a request to OpenAI's chat completion model, processes the response, 
+    and extracts structured labels for objects, actions, and visible text in the image.
+
+    Args:
+        prompt (dict): A dictionary containing the message structure required for the OpenAI API.
+
+    Returns:
+        dict: A dictionary with a single key `"labels"`, containing an array of generated labels. 
+              If the API refuses processing, returns a warning message inside the labels array.
+              If the request fails after 3 attempts, returns an error message inside the labels array.
+
+    Error Handling:
+        - Retries up to 3 times in case of API failure, with exponential backoff.
+        - Captures OpenAI refusals and includes a warning in the output.
+        - Logs errors and provides feedback if the request ultimately fails.
+
+    Example Output:
+        {
+            "labels": [
+                "man",
+                "sunglasses",
+                "hat",
+                "protesting",
+                "crowd",
+                "visible text: 'Leave the canal!': Panamanians protest against Trump outside US Embassy"
+            ]
+        }
+    
+    """
     params = {
         "model": OPENAI_MODEL,
         "messages": prompt,
@@ -105,7 +136,55 @@ def get_openai_labels(prompt):
 
 
 def process_images():
-    """Process all images in `output_grids/` and save labeled JSONs."""
+    """
+    Process all images in the `output_grids/` directory and generate labeled JSON files.
+
+    This function iterates through subdirectories in `INPUT_DIR`, extracting timestamps 
+    from image filenames, generating labels using OpenAI's API, and saving the labeled 
+    JSON output in structured directories.
+
+    Workflow:
+    1. Validate filenames using `validate_filenames(INPUT_DIR)`.
+    2. Iterate through all subdirectories of `INPUT_DIR`, treating each as a video name.
+    3. Create an `OUTPUT_DIR` subdirectory for each video, if it does not already exist.
+    4. Process each image file:
+       - Skip non-image files.
+       - Extract timestamps from the filename.
+       - Generate labels using `get_openai_labels()`.
+       - Save the response as a JSON file in the corresponding output subdirectory.
+    5. After processing all images for a video, combine results into a single JSON file using `combine_visual_content_json()`.
+
+    Error Handling:
+    - Skips files that do not have a valid timestamp.
+    - Skips non-image files.
+    - Ensures output directories exist before writing files.
+
+    Output:
+    - JSON files are named using the format `visual_content_{start_time}_{end_time}.json`.
+    - Each JSON file contains an array of detected objects, actions, and visible text.
+    - A final combined JSON file is created for each video directory.
+
+    Example Output:
+    ```json
+    {
+        "labels": [
+            "man",
+            "woman",
+            "flags",
+            "crowd",
+            "banner",
+            "visible text: 'PANAMA CITY'",
+            "visible text: 'MI PAÍS, MI SOBERANÍA, MI CANAL' (translation from Spanish: 'MY COUNTRY, MY SOVEREIGNTY, MY CANAL')",
+            "visible text: 'ASOPROF'",
+            "visible text: 'SINDICATO PÚBLICO' (translation from Spanish: 'PUBLIC UNION')",
+            "hat",
+            "sunglasses",
+            "blue shirt",
+            "red shirt"
+        ]
+    }
+    ```
+    """
     validate_filenames(INPUT_DIR)  # Ensure filenames are correctly formatted before processing
 
     for root, _, files in os.walk(INPUT_DIR):
@@ -137,13 +216,12 @@ def process_images():
             response = get_openai_labels(prompt)
 
             # TEMP - USE THIS TO TEST without sending API requests
-            # response = {'id': 'chatcmpl-AroXsGK9OTwXE4aSVoOm5xr9TD8p8', 'choices': [{'finish_reason': 'stop', 'index': 0, 'logprobs': None, 'message': {'content': '{"labels": ["indoor soccer","players","goal","blue team","yellow team","on-screen text: ARSENAL+ 3:4 REAL+","on-screen text: 2nd","on-screen text: 00:06","on-screen text: SHORT SPORT"]}', 'refusal': None, 'role': 'assistant', 'audio': None, 'function_call': None, 'tool_calls': None}}], 'created': 1737389044, 'model': 'gpt-4o-mini-2024-07-18', 'object': 'chat.completion', 'service_tier': 'default', 'system_fingerprint': 'fp_bd83329f63', 'usage': {'completion_tokens': 60, 'prompt_tokens': 1194, 'total_tokens': 1254, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 0, 'rejected_prediction_tokens': 0}, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}}}
+            # response = {'labels': ['man', 'woman', 'flags', 'crowd', 'banner', "visible text: 'PANAMA CITY'", "visible text: 'MI PAÍS, MI SOBERANÍA, MI CANAL' (translation from Spanish: 'MY COUNTRY, MY SOVEREIGNTY, MY CANAL')", "visible text: 'ASOPROF'", "visible text: 'SINDICATO PÚBLICO' (translation from Spanish: 'PUBLIC UNION')", 'hat', 'sunglasses', 'blue shirt', 'red shirt']}
 
             # Save JSON file
             time_key = f"{start_time}_{end_time}"
             output_filename = f"visual_content_{time_key}.json"
             output_path = os.path.join(output_subdir, output_filename)
-            print(output_path)
             
             if output_subdir != "output_visual_content/output_grids":
                 with open(output_path, "w", encoding="utf-8") as json_file:
