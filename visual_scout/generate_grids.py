@@ -26,7 +26,7 @@ def save_grid(grid, output_directory, start_timestamp, end_timestamp):
     print(f"Saved grid in: {output_directory}/{output_filename}")
 
 def process_images_in_chunks(files, input_directory, output_directory, grid_dimension):
-    """Process image files in chunks of GRID_DIMENSION to create grids."""
+    """Process image files in chunks of grid_dimension to create grids."""
     chunk_size = grid_dimension ** 2  # NxN grid = (grid_dimension * grid_dimension) images per grid
     for i in range(0, len(files), chunk_size):
         chunk = files[i:i + chunk_size]
