@@ -1,6 +1,7 @@
 import cv2
 import os
 import math
+import re
 from datetime import timedelta
 
 
@@ -59,3 +60,21 @@ def inspect_video(video_file):
     print(f"Video Duration: {timedelta(seconds=duration)}")
 
     cap.release()
+
+def natural_sort_key(filename):
+    """Generate a natural sort key for filenames."""
+    return [int(text) if text.isdigit() else text for text in re.split(r'(\d+)', filename)]
+
+def get_image_files(input_directory):
+    """Retrieve and sort image files from the input directory."""
+    return sorted(
+        [f for f in os.listdir(input_directory) if f.endswith('.jpg')],
+        key=natural_sort_key
+    )
+
+def extract_timestamps(filename):
+    """Extract start and end timestamps from a filename."""
+    match = re.search(r'frame_(.*?)_(.*?)\.jpg', filename)
+    if match:
+        return match.group(1), match.group(2)
+    raise ValueError(f"Filename format is incorrect: {filename}")
