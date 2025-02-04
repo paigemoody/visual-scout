@@ -112,7 +112,7 @@ def process_images():
         if not files:
             continue
 
-        video_name = os.path.basename(root) #.replace("__frames__grids", "__grids_visual_content")
+        video_name = os.path.basename(root)
         output_subdir = os.path.join(OUTPUT_DIR, video_name)
 
         if output_subdir != "output_visual_content/output_grids":
@@ -136,7 +136,7 @@ def process_images():
             prompt = get_label_gen_prompt(image_path)
             response = get_openai_labels(prompt)
 
-            # TEMP - REMOVE THIS 
+            # TEMP - USE THIS TO TEST without sending API requests
             # response = {'id': 'chatcmpl-AroXsGK9OTwXE4aSVoOm5xr9TD8p8', 'choices': [{'finish_reason': 'stop', 'index': 0, 'logprobs': None, 'message': {'content': '{"labels": ["indoor soccer","players","goal","blue team","yellow team","on-screen text: ARSENAL+ 3:4 REAL+","on-screen text: 2nd","on-screen text: 00:06","on-screen text: SHORT SPORT"]}', 'refusal': None, 'role': 'assistant', 'audio': None, 'function_call': None, 'tool_calls': None}}], 'created': 1737389044, 'model': 'gpt-4o-mini-2024-07-18', 'object': 'chat.completion', 'service_tier': 'default', 'system_fingerprint': 'fp_bd83329f63', 'usage': {'completion_tokens': 60, 'prompt_tokens': 1194, 'total_tokens': 1254, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 0, 'rejected_prediction_tokens': 0}, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}}}
 
             # Save JSON file
