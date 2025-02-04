@@ -34,7 +34,7 @@ This process is still under construction - for now there are three sequential pr
 
 ## Extract Frames 
 
-This process will extract frames from each video in the given directory. Frames images are extracted at 2 second intervals, and written to the `output_frames` directory.
+This process will extract frames from each video in the given directory. Frame images are extracted at 2 second intervals, and written to the `output_frames` directory.
 
 1. Create a directory within `visual_scout` and add all the videos you want to process into the new directory (skip this step if you want to use example videos)
 
