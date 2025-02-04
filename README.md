@@ -1,5 +1,7 @@
 # visual-scout (🚧 WIP)
 
+A work-in-progress tool for extracting visual elements (objects and text) from a set of videos, using OpenAI.
+
 ## Setup
 
 1. Create virtual environment
@@ -28,7 +30,7 @@ pip install -r requirements.txt
 
 # Process Video
 
-This process is still under construction - for now there are three sequential processes to run to get output labels.
+Note: This process is still under construction - for now there are three processes that must be run sequentially to generate output data.
 
 ## Extract Frames 
 
@@ -56,7 +58,7 @@ Note: you may want to play around with grid size to figure out the ideal level o
 
 ## Extract Visual Content
 
-This is where you will use an AI model (just OpenAI is available for now) to extact information about the visual aspects of your videos.
+This is where you will use an AI model (just OpenAI is available for now) to extact information about the visual elements of your videos.
 
 1. Create your .env file
 
