@@ -16,13 +16,13 @@ source venv/bin/activate
 
 3. Install requirements 
 
-a.  Since opencv-python needs cmake and scikit-build let's install them first
+    Since opencv-python needs cmake and scikit-build let's install them first
 
 ```
 pip3 install cmake scikit-build
 ```
 
-b. Now install the rest
+    Now install the rest
 
 ```
 pip install -r requirements.txt
@@ -54,5 +54,5 @@ Note: you may want to play around with grid size to figure out the ideal level o
 
     To use a different grid size run: `python3 -m visual_scout.generate_grids --grid-size <grid size intger>` 
 
-        For example: `python3 -m visual_scout.generate_grids --grid-size <grid size intger>`
+    For example: `python3 -m visual_scout.generate_grids --grid-size <grid size intger>`
 
