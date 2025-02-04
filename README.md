@@ -1,4 +1,4 @@
-# visual-scout
+# visual-scout (🚧 WIP)
 
 ## Setup
 
@@ -40,5 +40,19 @@ This process will extract frames from each video in the given directory. Frame i
 
 2. Run `python3 -m visual_scout.extract_frames visual_scout/<your directory name>`
 
-    To use example videos: `python3 -m visual_scout.extract_frames visual_scout/example_videos`
+    To use example videos run: `python3 -m visual_scout.extract_frames visual_scout/example_videos`
+
+## Generate Grids 
+
+This process will combine extracted frames into sequential image grids, defaulting to 3x3 grids. Grid images are written to the `output_grids` directory. 
+
+Note: you may want to play around with grid size to figure out the ideal level of detail required for the specific AI model you're using to extract data from the images.
+
+1. Generate grids
+
+    To use default grid size run: `python3 -m visual_scout.generate_grids`
+
+    To use a different grid size run: `python3 -m visual_scout.generate_grids --grid-size <grid size intger>` 
+
+        For example: `python3 -m visual_scout.generate_grids --grid-size <grid size intger>`
 
