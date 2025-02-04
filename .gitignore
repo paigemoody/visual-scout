@@ -1,3 +1,9 @@
+# Ignore everything inside output_frames/
+output_frames/*
+
+# But keep the .gitkeep file
+!output_frames/.gitkeep
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
