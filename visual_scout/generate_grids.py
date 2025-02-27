@@ -35,17 +35,19 @@ def process_images_in_chunks(files, input_directory, output_directory, grid_dime
         frame_width, frame_height = images[0].size
         grid = create_grid(images, frame_width, frame_height, grid_dimension)
 
-        start_timestamp, _ = extract_timestamps(chunk[0])
-        _, end_timestamp = extract_timestamps(chunk[-1])
+        first_file_in_chunk = chunk[0]
+        last_file_in_chunk = chunk[-1]
+        first_file_in_chunk_timestamps = extract_timestamps(first_file_in_chunk)
+        last_file_in_chunk_timestamps = extract_timestamps(last_file_in_chunk)
+
+        start_timestamp = first_file_in_chunk_timestamps[0]
+        end_timestamp = last_file_in_chunk_timestamps[-1]
 
         save_grid(grid, output_directory, start_timestamp, end_timestamp)
 
-def create_grids_from_frames(grid_dimension):
-    """Processes frames from `output_frames/`, saving grids in `output_grids/{video_name}__grids/`."""
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Go up one level
-    input_directory = os.path.join(base_dir, "output_frames")
-    output_directory = os.path.join(base_dir, "output_grids")
-
+def create_grids_from_frames(grid_dimension, input_directory, output_directory):
+    """Processes frames from given input location"""
+    
     if not os.path.exists(input_directory):
         raise FileNotFoundError(f"Input directory '{input_directory}' does not exist.")
 
@@ -58,12 +60,14 @@ def create_grids_from_frames(grid_dimension):
             video_grid_dir = os.path.join(output_directory, f"{video_folder}__grids")
 
             files = get_image_files(video_folder_path)
+            print(f"files: {files}")
             if files:
                 process_images_in_chunks(files, video_folder_path, video_grid_dir, grid_dimension)
             else:
                 print(f"No image files found in '{video_folder_path}'.")
 
     print(f"Grids have been saved in: {output_directory}")
+    return output_directory
 
 def main():
     """Parses command-line arguments and runs the grid generation process."""
@@ -76,7 +80,11 @@ def main():
     )
 
     args = parser.parse_args()
-    create_grids_from_frames(args.grid_size)
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Go up one level
+    # use `output_frames/` for input and and `output_grids/` for output.
+    input_directory = os.path.join(base_dir, "output_frames")
+    output_directory = os.path.join(base_dir, "output_grids")
+    create_grids_from_frames(args.grid_size, input_directory, output_directory)
 
 if __name__ == "__main__":
     main()

@@ -3,9 +3,6 @@ import re
 import base64
 import sys
 
-# Regex for filenames with timestamps (e.g., grid_0-00-00_0-00-18.jpg)
-TIMESTAMP_PATTERN = re.compile(r'(\d{1,2}-\d{2}-\d{2})_(\d{1,2}-\d{2}-\d{2})')
-
 
 def encode_image_to_base64(image_path):
     """Convert an image to a base64-encoded string."""
@@ -22,8 +19,13 @@ def extract_timestamps(filename):
     Extract start and end timestamps from a filename if it follows the pattern `hh-mm-ss_hh-mm-ss`.
     Returns None if no timestamps are found.
     """
+    # Regex for filenames with timestamps (e.g., grid_0-00-00_0-00-18.jpg)
+    TIMESTAMP_PATTERN = re.compile(r'(\d{1,2}-\d{2}-\d{2})_(\d{1,2}-\d{2}-\d{2})')
     match = TIMESTAMP_PATTERN.search(filename)
-    return match.groups() if match else None
+    
+    groups = match.groups() if match else None
+    print("\ngroups:", groups)
+    return groups
 
 
 def validate_filenames(input_dir):
