@@ -2,7 +2,7 @@
 
 A work-in-progress tool for extracting visual elements (objects and text) from a set of videos, using OpenAI.
 
-## Setup
+## Development Setup
 
 1. Create virtual environment
 
@@ -16,7 +16,7 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
-3. Install initial requirements. Since opencv-python needs cmake and scikit-build we'll install them first:
+3. Install initial dependencies. Since opencv-python needs cmake and scikit-build we'll install them first:
 
 ```
 pip3 install cmake scikit-build
@@ -26,6 +26,14 @@ pip3 install cmake scikit-build
 
 ```
 pip install -r requirements.txt
+```
+
+5. Install visual scout in editable mode
+
+- Note: This installs visual_scout itself, the previous steps install third-party packages visual_scout depends on.
+
+```
+pip install -e .
 ```
 
 # Process Video
