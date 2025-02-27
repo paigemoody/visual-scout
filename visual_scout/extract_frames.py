@@ -2,7 +2,6 @@ import cv2
 import os
 import math
 from datetime import timedelta
-import argparse
 
 
 def extract_frames(video_file):
@@ -24,16 +23,16 @@ def extract_frames(video_file):
     if not os.path.exists(video_file):
         raise FileNotFoundError(f"Video file {video_file} not found.")
 
+    print(f"\nProcessing: {video_file}")
+    cap = cv2.VideoCapture(video_file)
+    if not cap.isOpened():
+        raise IOError(f"Unable to open video file {video_file}")  # ✅ Raise error before creating output directory
+
     output_dir = "output_frames"
     base_name = os.path.basename(video_file)
     name_without_ext = os.path.splitext(base_name)[0]
     frame_dir = os.path.join(output_dir, f"{name_without_ext}__frames")
-    os.makedirs(frame_dir, exist_ok=True)
-
-    print(f"\nProcessing: {video_file}")
-    cap = cv2.VideoCapture(video_file)
-    if not cap.isOpened():
-        raise IOError(f"Unable to open video file {video_file}")
+    os.makedirs(frame_dir, exist_ok=True)  # created only if the video opens successfully
 
     fps = cap.get(cv2.CAP_PROP_FPS)
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -54,7 +53,6 @@ def extract_frames(video_file):
     while frame_index < frame_count:  # Ensure we do not go beyond available frames
         print(f"Processing frame {frame_index} / {frame_count}")  # Debug log
 
-        # cap.set(cv2.CAP_PROP_POS_FRAMES, frame_index)  # Move to the exact frame
         cap.set(cv2.CAP_PROP_POS_FRAMES, min(frame_index, frame_count - 1))  # Avoid overshooting
         ret, frame = cap.read()
         
@@ -82,6 +80,12 @@ def extract_frames(video_file):
             break
 
     cap.release()
+
+    # ensure the output directory is removed if no frames were extracted
+    if saved_frames == 0:
+        os.rmdir(frame_dir)
+        print(f"Removed empty output directory: {frame_dir}")
+
     print(f"Frames saved: {saved_frames} in {frame_dir}")
 
 
@@ -144,4 +148,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
