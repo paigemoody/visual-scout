@@ -53,13 +53,26 @@ def inspect_video(video_file):
     fps = cap.get(cv2.CAP_PROP_FPS)
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     duration = frame_count / fps
+    video_duration = timedelta(seconds=duration)
 
-    print(f"Video File: {video_file}")
-    print(f"Frames per Second (FPS): {fps}")
-    print(f"Total Frames: {frame_count}")
-    print(f"Video Duration: {timedelta(seconds=duration)}")
+    results = {
+        "video file" : video_file,
+        "frames per second (FPS)": fps,
+        "total frames": frame_count,
+        "video duration" : video_duration
+    }
+
+    for result in results:
+        print(f"{result} : {results[result]}")
+
+    # print(f"Video File: {video_file}")
+    # print(f"Frames per Second (FPS): {fps}")
+    # print(f"Total Frames: {frame_count}")
+    # print(f"Video Duration: {timedelta(seconds=duration)}")
 
     cap.release()
+
+    return results
 
 def natural_sort_key(filename):
     """Generate a natural sort key for filenames."""
@@ -71,10 +84,3 @@ def get_image_files(input_directory):
         [f for f in os.listdir(input_directory) if f.endswith('.jpg')],
         key=natural_sort_key
     )
-
-def extract_timestamps(filename):
-    """Extract start and end timestamps from a filename."""
-    match = re.search(r'frame_(.*?)_(.*?)\.jpg', filename)
-    if match:
-        return match.group(1), match.group(2)
-    raise ValueError(f"Filename format is incorrect: {filename}")
