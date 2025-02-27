@@ -1,3 +1,5 @@
+.DS_Store
+
 # Ignore everything inside output_*/
 output_frames/*
 output_grids/*
