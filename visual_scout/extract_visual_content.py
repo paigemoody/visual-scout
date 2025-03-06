@@ -15,11 +15,7 @@ OPENAI_MODEL = os.getenv("OPENAI_MODEL")
 if not OPENAI_KEY or not OPENAI_MODEL:
     raise ValueError("Missing required environment variables: OPENAI_KEY and OPENAI_MODEL")
 
-openai_client = openai.OpenAI(api_key=OPENAI_KEY)
-
-# Define directories
-INPUT_DIR = "output_grids"
-OUTPUT_DIR = "output_visual_content"
+OPENAI_CLIENT = openai.OpenAI(api_key=OPENAI_KEY)
 
 
 def get_label_gen_prompt(image_path):
@@ -117,7 +113,7 @@ def get_openai_labels(prompt):
 
     for attempt in range(3):  # Retry up to 3 times
         try:
-            response = openai_client.chat.completions.create(**params)
+            response = OPENAI_CLIENT.chat.completions.create(**params)
             response_json = json.loads(response.model_dump_json())
 
             if refusal := response_json["choices"][0]["message"].get("refusal"):
@@ -135,17 +131,17 @@ def get_openai_labels(prompt):
     return {}
 
 
-def process_images():
+def process_images(input_dir="output_grids", output_dir="output_visual_content"):
     """
-    Process all images in the `output_grids/` directory and generate labeled JSON files.
+    Process all images in the input_dir directory and generate labeled JSON files.
 
-    This function iterates through subdirectories in `INPUT_DIR`, extracting timestamps 
+    This function iterates through subdirectories in input_dir, extracting timestamps 
     from image filenames, generating labels using OpenAI's API, and saving the labeled 
     JSON output in structured directories.
 
     Workflow:
-    1. Validate filenames using `validate_filenames(INPUT_DIR)`.
-    2. Iterate through all subdirectories of `INPUT_DIR`, treating each as a video name.
+    1. Validate filenames using `validate_filenames()`.
+    2. Iterate through all subdirectories of `input_dir`, treating each as a video name.
     3. Create an `OUTPUT_DIR` subdirectory for each video, if it does not already exist.
     4. Process each image file:
        - Skip non-image files.
@@ -185,14 +181,26 @@ def process_images():
     }
     ```
     """
-    validate_filenames(INPUT_DIR)  # Ensure filenames are correctly formatted before processing
+    validate_filenames(input_dir)  # Ensure input filenames are correctly formatted before processing
 
-    for root, _, files in os.walk(INPUT_DIR):
+    ## 0. Validate correct format of input dir
+        ## Must be base_name/video_name__frames__grids/grid_<timestamp>.jpg
+    ## 1. Group video names with image paths
+    ## 2. Iterate through video names
+    ## 2a. Iterate through images (parallelize?)
+    ## 2aa. Process each image, write results to single json file
+    ## 2b. Combine all json files for video
+
+    base_dir = os.path.abspath(os.path.dirname(__file__))  # Get the base directory of this script
+
+    print(os.path.join(base_dir, input_dir))
+
+    for root, _, files in os.walk(input_dir):
         if not files:
             continue
 
         video_name = os.path.basename(root)
-        output_subdir = os.path.join(OUTPUT_DIR, video_name)
+        output_subdir = os.path.join(output_dir, video_name)
 
         if output_subdir != "output_visual_content/output_grids":
             os.makedirs(output_subdir, exist_ok=True)
@@ -213,10 +221,10 @@ def process_images():
 
             # Get labels from OpenAI
             prompt = get_label_gen_prompt(image_path)
-            response = get_openai_labels(prompt)
+            # response = get_openai_labels(prompt)
 
             # TEMP - USE THIS TO TEST without sending API requests
-            # response = {'labels': ['man', 'woman', 'flags', 'crowd', 'banner', "visible text: 'PANAMA CITY'", "visible text: 'MI PAÍS, MI SOBERANÍA, MI CANAL' (translation from Spanish: 'MY COUNTRY, MY SOVEREIGNTY, MY CANAL')", "visible text: 'ASOPROF'", "visible text: 'SINDICATO PÚBLICO' (translation from Spanish: 'PUBLIC UNION')", 'hat', 'sunglasses', 'blue shirt', 'red shirt']}
+            response = {'labels': ['man', 'woman', 'flags', 'crowd', 'banner', "visible text: 'PANAMA CITY'", "visible text: 'MI PAÍS, MI SOBERANÍA, MI CANAL' (translation from Spanish: 'MY COUNTRY, MY SOVEREIGNTY, MY CANAL')", "visible text: 'ASOPROF'", "visible text: 'SINDICATO PÚBLICO' (translation from Spanish: 'PUBLIC UNION')", 'hat', 'sunglasses', 'blue shirt', 'red shirt']}
 
             # Save JSON file
             time_key = f"{start_time}_{end_time}"
@@ -227,12 +235,83 @@ def process_images():
                 with open(output_path, "w", encoding="utf-8") as json_file:
                     json.dump(response, json_file, indent=2)
 
-                print(f"✅ Processed: {image_path} → {output_path}")
+                print(f"\n✅ Processed: {image_path} → {output_path}")
                 processed_files.append(output_path)
 
         # After processing all images for this video, combine them into one JSON
         if output_subdir != "output_visual_content/output_grids":
             combine_visual_content_json(video_name, output_subdir, processed_files)
+
+# def process_images(input_dir=None, output_dir=None):
+#     """
+#     Process all images in the `input_dir` directory and generate labeled JSON files.
+
+#     Args:
+#         input_dir (str, optional): Path to the directory containing grids. Defaults to "output_grids".
+#         output_dir (str, optional): Path to the directory where JSON output should be stored. Defaults to "output_visual_content".
+
+#     """
+
+#     # Convert to absolute paths of defaults, if dirs not defined in call
+#     base_dir = os.path.abspath(os.path.dirname(__file__))  # Get the base directory of this script
+#     input_dir = os.path.abspath(input_dir or os.path.join(base_dir, "output_grids"))
+#     output_dir = os.path.abspath(output_dir or os.path.join(base_dir, "output_visual_content"))
+
+#     # Validate filenames before processing
+#     validate_filenames(input_dir)
+
+#     print(f"\n📂 Processing images from: {input_dir}")
+#     print(f"📂 Saving JSON output to: {output_dir}")
+
+#     print([files for root, _, files in os.walk(input_dir)])
+
+#     for root, _, files in os.walk(input_dir):
+#         print("Starting walk for {root} {files}...")
+#         if not files:
+#             print(f"{root} is empty, skipping...")
+#             continue  # Skip empty directories
+
+#         video_name = os.path.basename(root)
+#         # nix the extra part of the name to create the sub dir
+#         output_subdir = os.path.join(output_dir, video_name).replace("__frames__grids", "")
+
+#         print("\noutput_subdir: ", output_subdir)
+
+#         # Ensure output directory exists
+#         os.makedirs(output_subdir, exist_ok=True)
+
+#         processed_files = []
+
+#         for file in sorted(files):
+#             if not file.lower().endswith((".jpg", ".jpeg", ".png")):
+#                 continue  # Skip non-image files
+
+#             image_path = os.path.join(root, file)
+#             timestamps = extract_timestamps(file)
+
+#             if not timestamps:
+#                 continue  # Skip files without correct timestamps
+
+#             start_time, end_time = timestamps
+
+#             # Get labels from OpenAI
+#             prompt = get_label_gen_prompt(image_path)
+#             response = get_openai_labels(prompt)
+#             print("\n\nresponse:", response)
+
+#             # Save JSON file
+#             time_key = f"{start_time}_{end_time}"
+#             output_filename = f"visual_content_{time_key}.json"
+#             output_path = os.path.join(output_subdir, output_filename)
+
+#             with open(output_path, "w", encoding="utf-8") as json_file:
+#                 json.dump(response, json_file, indent=2)
+
+#             print(f"\n\n\n✅ Processed: {image_path}\n\nSaved to: {output_path}")
+#             processed_files.append(output_path)
+
+#         # After processing all images for this video, combine them into one JSON
+#         combine_visual_content_json(video_name, output_subdir, processed_files)
 
 
 def combine_visual_content_json(video_name, output_subdir, json_files):
@@ -249,13 +328,14 @@ def combine_visual_content_json(video_name, output_subdir, json_files):
             print(f"⚠️ Warning: Skipping {json_file} due to error: {e}")
 
     # Save combined JSON file next to the timestamp JSONs
-    combined_output_path = os.path.join(output_subdir, f"{video_name}.json")
+    combined_video_json_name = video_name.replace("__frames__grids", "__visual_content")
+    combined_output_path = os.path.join(output_subdir, f"{combined_video_json_name}.json")
 
     with open(combined_output_path, "w", encoding="utf-8") as combined_file:
         json.dump(combined_data, combined_file, indent=2)
 
     print(f"📄 Combined visual content JSON saved: {combined_output_path}")
 
-
 if __name__ == "__main__":
+    print("\nStarting extraction of visual content...")
     process_images()

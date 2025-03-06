@@ -1,6 +1,6 @@
+import argparse
 import cv2
 import os
-import math
 from datetime import timedelta
 
 
@@ -26,12 +26,11 @@ def extract_frames(video_file):
     print(f"\nProcessing: {video_file}")
     cap = cv2.VideoCapture(video_file)
     if not cap.isOpened():
-        raise IOError(f"Unable to open video file {video_file}")  # ✅ Raise error before creating output directory
+        raise IOError(f"Unable to open video file {video_file}")  # raise error before creating output directory
 
-    output_dir = "output_frames"
     base_name = os.path.basename(video_file)
     name_without_ext = os.path.splitext(base_name)[0]
-    frame_dir = os.path.join(output_dir, f"{name_without_ext}__frames")
+    frame_dir = os.path.join("output", "output_frames", f"{name_without_ext}__frames")
     os.makedirs(frame_dir, exist_ok=True)  # created only if the video opens successfully
 
     fps = cap.get(cv2.CAP_PROP_FPS)
@@ -68,7 +67,7 @@ def extract_frames(video_file):
         frame_path = os.path.join(frame_dir, frame_filename)
 
         if cv2.imwrite(frame_path, frame):
-            print(f"Saved: {frame_filename}")
+            print(f"Saved: {frame_path}")
             saved_frames += 1
         else:
             print(f"Error saving: {frame_filename}")
@@ -103,6 +102,7 @@ def extract_frames_from_directory(input_dir):
     Raises:
         FileNotFoundError: If the specified input directory does not exist.
     """
+    print(f"\n\nExtractin from {input_dir}...")
     if not os.path.exists(input_dir):
         raise FileNotFoundError(f"Input directory {input_dir} not found.")
 

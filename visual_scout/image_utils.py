@@ -24,7 +24,6 @@ def extract_timestamps(filename):
     match = TIMESTAMP_PATTERN.search(filename)
     
     groups = match.groups() if match else None
-    print("\ngroups:", groups)
     return groups
 
 

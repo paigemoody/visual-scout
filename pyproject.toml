@@ -3,7 +3,7 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "visual_scout"
+name = "visual-scout"
 version = "0.1.0"
 description = "A tool for extracting information from videos and images."
 authors = [{ name = "Paige Moody"}]

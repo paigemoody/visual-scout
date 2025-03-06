@@ -1,0 +1,20 @@
+{
+  "labels": [
+    "man",
+    "woman",
+    "crowd",
+    "flag",
+    "red shirt",
+    "blue shirt",
+    "hat",
+    "visible text: 'PANAMA CITY'",
+    "visible text: 'MI PA\u00cdS, MI SOBERAN\u00cdA, MI CANAL' (translation from Spanish: 'MY COUNTRY, MY SOVEREIGNTY, MY CANAL')",
+    "visible text: 'ASOPROF'",
+    "visible text: 'NOTICIAS' (translation from Spanish: 'NEWS')",
+    "actions: 'holding flag'",
+    "actions: 'gathering'",
+    "actions: 'shouting'",
+    "actions: 'marching'",
+    "interface element: 'associated press logo'"
+  ]
+}

@@ -2,8 +2,8 @@ import os
 import re
 import argparse
 from PIL import Image
-
-from .video_utils import get_image_files, extract_timestamps
+from visual_scout.image_utils import extract_timestamps
+from .video_utils import get_image_files
 
 def create_grid(images, frame_width, frame_height, grid_dimension):
     """Create a grid image from a list of individual images."""
@@ -54,19 +54,18 @@ def create_grids_from_frames(grid_dimension, input_directory, output_directory):
     for video_folder in os.listdir(input_directory):
         video_folder_path = os.path.join(input_directory, video_folder)
         if os.path.isdir(video_folder_path):  # Ensure it's a directory
-            print(f"Processing frames from: {video_folder}")
+            print(f"\nProcessing frames from: {video_folder}")
 
             # Define output directory for this specific video
             video_grid_dir = os.path.join(output_directory, f"{video_folder}__grids")
 
             files = get_image_files(video_folder_path)
-            print(f"files: {files}")
             if files:
                 process_images_in_chunks(files, video_folder_path, video_grid_dir, grid_dimension)
             else:
                 print(f"No image files found in '{video_folder_path}'.")
 
-    print(f"Grids have been saved in: {output_directory}")
+    print(f"\nGrids have been saved in: {output_directory}")
     return output_directory
 
 def main():
