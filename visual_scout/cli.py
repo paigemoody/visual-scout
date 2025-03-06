@@ -1,5 +1,5 @@
 import argparse
-from visual_scout.extract_frames import extract_frames
+from visual_scout.extract_frames import main_extract_frames
 from visual_scout.extract_visual_content import process_images
 from visual_scout.generate_grids import create_grids_from_frames
 
@@ -8,21 +8,20 @@ def main():
     subparsers = parser.add_subparsers(dest="command", help="Subcommands")
 
     # Extract Frames
-    parser_extract = subparsers.add_parser("extract-frames", help="Extract frames from a video")
-    parser_extract.add_argument("video_file", type=str, help="Path to the video file")
-    parser_extract.add_argument("--output-dir", type=str, default="output_frames", help="Output directory for extracted frames")
-    parser_extract.set_defaults(func=lambda args: extract_frames(args.video_file, args.output_dir))
+    parser_extract = subparsers.add_parser("extract-frames", help="Extract frames for all files within input directory")
+    parser_extract.add_argument("input_dir", type=str, help="Path to the video file")
+    parser_extract.set_defaults(func=lambda args: main_extract_frames(args.input_dir))
 
-    # Generate Grids
-    parser_grids = subparsers.add_parser("generate-grids", help="Generate image grids from extracted frames")
-    parser_grids.add_argument("--grid-size", type=int, default=3, help="Grid dimension (NxN), default is 3x3")
-    parser_grids.set_defaults(func=lambda args: create_grids_from_frames(args.grid_size))
+    # # Generate Grids
+    # parser_grids = subparsers.add_parser("generate-grids", help="Generate image grids from extracted frames")
+    # parser_grids.add_argument("--grid-size", type=int, default=3, help="Grid dimension (NxN), default is 3x3")
+    # parser_grids.set_defaults(func=lambda args: create_grids_from_frames(args.grid_size))
 
-    # Process Visual Content
-    parser_process = subparsers.add_parser("process-images", help="Process image grids and generate labels")
-    parser_process.add_argument("--input-dir", type=str, default="output_grids", help="Input directory for image grids")
-    parser_process.add_argument("--output-dir", type=str, default="output_visual_content", help="Output directory for JSON results")
-    parser_process.set_defaults(func=lambda args: process_images(args.input_dir, args.output_dir))
+    # # Process Visual Content
+    # parser_process = subparsers.add_parser("process-images", help="Process image grids and generate labels")
+    # parser_process.add_argument("--input-dir", type=str, default="output_grids", help="Input directory for image grids")
+    # parser_process.add_argument("--output-dir", type=str, default="output_visual_content", help="Output directory for JSON results")
+    # parser_process.set_defaults(func=lambda args: process_images(args.input_dir, args.output_dir))
 
     # Parse arguments
     args = parser.parse_args()

@@ -1,7 +1,48 @@
 import argparse
+from ast import Return
 import cv2
 import os
 from datetime import timedelta
+import warnings
+
+def make_frames_output_dir(video_file):
+    base_name = os.path.basename(video_file)
+    name_without_ext = os.path.splitext(base_name)[0]
+    frame_dir = os.path.join("output", "output_frames", f"{name_without_ext}__frames")
+    os.makedirs(frame_dir, exist_ok=True)  # created only if the video opens successfully
+    return frame_dir
+
+
+def open_video(video_file):
+    print("video_file:", video_file)
+    executed_from = os.getcwd().replace("//", "/") # handle possible leading slash
+    video_full_path = os.path.join(executed_from, video_file)
+
+    print("\n\nvideo_full_path:", video_full_path)
+
+    # if not os.path.exists(video_full_path):
+    #     raise FileNotFoundError(f"Video file {video_full_path} not found.")
+
+    # print(f"\nProcessing: {video_file}")
+    # cap = cv2.VideoCapture(video_full_path)
+    # if not cap.isOpened():
+    #     raise IOError(f"Unable to open video file {video_full_path}")  # raise error before creating output directory
+
+    # return cap
+
+    if not os.path.exists(video_full_path):
+        raise FileNotFoundError(f"Video file not found: {video_full_path}")
+
+    try:
+        cap = cv2.VideoCapture(video_full_path)
+        if not cap.isOpened():
+            warnings.warn(f"Unable to open video file {video_full_path}. Skipping.")
+            return False
+        return cap
+
+    except cv2.error as e:
+        warnings.warn(f"OpenCV encountered an error while opening video {video_full_path}: {str(e)}") 
+        return False
 
 
 def extract_frames(video_file):
@@ -20,18 +61,31 @@ def extract_frames(video_file):
         - Instead of setting a timestamp directly, it extracts frames based on index calculations.
         - The extracted frames are saved as JPEG images.
     """
-    if not os.path.exists(video_file):
-        raise FileNotFoundError(f"Video file {video_file} not found.")
+    # print("video_file:", video_file)
+    # executed_from = os.getcwd().replace("//", "/") # handle possible leading slash
+    # video_full_path = os.path.join(executed_from, video_file)
 
-    print(f"\nProcessing: {video_file}")
-    cap = cv2.VideoCapture(video_file)
-    if not cap.isOpened():
-        raise IOError(f"Unable to open video file {video_file}")  # raise error before creating output directory
+    # print("\n\nvideo_full_path:", video_full_path)
 
-    base_name = os.path.basename(video_file)
-    name_without_ext = os.path.splitext(base_name)[0]
-    frame_dir = os.path.join("output", "output_frames", f"{name_without_ext}__frames")
-    os.makedirs(frame_dir, exist_ok=True)  # created only if the video opens successfully
+    # if not os.path.exists(video_full_path):
+    #     raise FileNotFoundError(f"Video file {video_full_path} not found.")
+
+    # print(f"\nProcessing: {video_file}")
+    # cap = cv2.VideoCapture(video_full_path)
+    # if not cap.isOpened():
+    #     raise IOError(f"Unable to open video file {video_full_path}")  # raise error before creating output directory
+
+    cap = open_video(video_file)
+
+    if not cap:
+        return False
+    # only make output sub dir if video was able to be opened
+    frame_dir = make_frames_output_dir(video_file)
+    
+    # base_name = os.path.basename(video_file)
+    # name_without_ext = os.path.splitext(base_name)[0]
+    # frame_dir = os.path.join("output", "output_frames", f"{name_without_ext}__frames")
+    # os.makedirs(frame_dir, exist_ok=True)  # created only if the video opens successfully
 
     fps = cap.get(cv2.CAP_PROP_FPS)
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -102,7 +156,7 @@ def extract_frames_from_directory(input_dir):
     Raises:
         FileNotFoundError: If the specified input directory does not exist.
     """
-    print(f"\n\nExtractin from {input_dir}...")
+    print(f"\n\nExtracting from {input_dir}...")
     if not os.path.exists(input_dir):
         raise FileNotFoundError(f"Input directory {input_dir} not found.")
 
@@ -123,28 +177,18 @@ def extract_frames_from_directory(input_dir):
     print("\nAll videos processed successfully.")
 
 
-def main():
+def main_extract_frames(input_dir):
     """
-    Parses command-line arguments and runs extract_frames_from_directory.
-    Allows the user to run the script via the command:
-        python3 extract_frames.py <input_directory>
+    Confirm input dir exists, then run frame extraction
     """
-    parser = argparse.ArgumentParser(description="Extract frames from all videos in a given directory.")
-    parser.add_argument(
-        "input_directory",
-        type=str,
-        help="Path to the directory containing video files."
-    )
-
-    args = parser.parse_args()
 
     # Ensure the directory exists
-    if not os.path.exists(args.input_directory):
-        print(f"Error: The directory '{args.input_directory}' does not exist.")
+    if not os.path.exists(input_dir):
+        print(f"Error: The directory '{input_dir}' does not exist.")
         return
 
     # Run frame extraction
-    extract_frames_from_directory(args.input_directory)
+    extract_frames_from_directory(input_dir)
 
 if __name__ == "__main__":
-    main()
+    main_extract_frames()

@@ -11,8 +11,15 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "MIT" }
 dependencies = [
-    "opencv-python",
     "numpy",
+    "setuptools",
+    "dotenv",
+    "numpy==1.24.4",
+    "opencv-python==4.10.0.84",
+    "pillow==10.4.0",
+    "openai>=1.59.8",
+    "python-dotenv==1.0.1",
+    "pytest==8.3.4"
 ]
 
 [project.optional-dependencies]
@@ -22,8 +29,13 @@ dev = [
     "black",
 ]
 
-[tool.setuptools]
-packages = ["visual_scout"]
+[project.scripts]
+visual-scout = "visual_scout.cli:main"
+
+
+[tool.setuptools.packages.find]
+include = ["visual*"]
+where = ["visual_scout"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
