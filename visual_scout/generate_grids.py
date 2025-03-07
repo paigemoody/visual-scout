@@ -1,6 +1,4 @@
 import os
-import re
-import argparse
 from PIL import Image
 from visual_scout.image_utils import extract_timestamps
 from visual_scout.video_utils import get_image_files
