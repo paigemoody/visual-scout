@@ -1,17 +1,8 @@
-import argparse
-from ast import Return
-from distutils import extension
 import cv2
 import os
 from datetime import timedelta
 import warnings
-
-def make_frames_output_dir(video_file):
-    base_name = os.path.basename(video_file)
-    name_without_ext = os.path.splitext(base_name)[0]
-    output_frame_dir = os.path.join("output", "output_frames", f"{name_without_ext}__frames")
-    os.makedirs(output_frame_dir, exist_ok=True)
-    return output_frame_dir
+from visual_scout.io_utils import make_output_dir
 
 
 def open_video(video_file):
@@ -56,7 +47,7 @@ def extract_frames(video_file):
     if not cap:
         return False
     # only make output sub dir if video was able to be opened
-    output_frame_dir = make_frames_output_dir(video_file)
+    output_frame_dir = make_output_dir(video_file, "frames")
 
     print("\n\n:", output_frame_dir)
 

@@ -28,16 +28,16 @@ class TestExtractFrames(unittest.TestCase):
             self.temp_output_frames_dir, self.valid_video_name.replace(".mov", "__frames")
         )
 
-        # Patch make_frames_output_dir to dynamically generate the correct path
-        def mock_make_frames_output_dir(video_file):
+        # Patch make_output_dir to dynamically generate the correct path
+        def mock_make_output_dir(video_file, processing_step):
             base_name = os.path.basename(video_file)
             name_without_ext = os.path.splitext(base_name)[0]
             mock_output_frame_dir = os.path.join(self.temp_output_frames_dir, f"{name_without_ext}__frames")
             os.makedirs(mock_output_frame_dir, exist_ok=True)
             return mock_output_frame_dir
 
-        self.patcher = patch("visual_scout.extract_frames.make_frames_output_dir", side_effect=mock_make_frames_output_dir)
-        self.mock_make_frames_output_dir = self.patcher.start()
+        self.patcher = patch("visual_scout.extract_frames.make_output_dir", side_effect=mock_make_output_dir)
+        self.mock_make_output_dir = self.patcher.start()
 
     def tearDown(self):
         """Remove the temp output directory after each test."""

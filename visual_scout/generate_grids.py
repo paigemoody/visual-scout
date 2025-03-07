@@ -3,7 +3,7 @@ import re
 import argparse
 from PIL import Image
 from visual_scout.image_utils import extract_timestamps
-from .video_utils import get_image_files
+from visual_scout.video_utils import get_image_files
 
 def create_grid(images, frame_width, frame_height, grid_dimension):
     """Create a grid image from a list of individual images."""
@@ -68,22 +68,12 @@ def create_grids_from_frames(grid_dimension, input_directory, output_directory):
     print(f"\nGrids have been saved in: {output_directory}")
     return output_directory
 
-def main():
-    """Parses command-line arguments and runs the grid generation process."""
-    parser = argparse.ArgumentParser(description="Generate image grids from extracted frames.")
-    parser.add_argument(
-        "--grid-size",
-        type=int,
-        default=3,
-        help="Grid dimension (NxN), default is 3x3"
-    )
-
-    args = parser.parse_args()
+def main_generate_grids(grid_size):
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Go up one level
     # use `output_frames/` for input and and `output_grids/` for output.
-    input_directory = os.path.join(base_dir, "output_frames")
-    output_directory = os.path.join(base_dir, "output_grids")
-    create_grids_from_frames(args.grid_size, input_directory, output_directory)
+    input_directory = os.path.join(base_dir, "output", "output_frames")
+    output_directory = os.path.join(base_dir, "output", "output_grids")
+    create_grids_from_frames(grid_size, input_directory, output_directory)
 
 if __name__ == "__main__":
-    main()
+    main_generate_grids()
