@@ -3,7 +3,7 @@ import os
 import shutil
 import tempfile
 from unittest.mock import patch
-from visual_scout.extract_frames import extract_frames, extract_frames_from_directory
+from visual_scout.extract_frames import extract_frames, main_extract_frames
 
 
 class TestExtractFrames(unittest.TestCase):
@@ -29,14 +29,10 @@ class TestExtractFrames(unittest.TestCase):
         )
 
         # Patch make_output_dir to dynamically generate the correct path
-        def mock_make_output_dir(video_file, processing_step):
-            base_name = os.path.basename(video_file)
-            name_without_ext = os.path.splitext(base_name)[0]
-            mock_output_frame_dir = os.path.join(self.temp_output_frames_dir, f"{name_without_ext}__frames")
-            os.makedirs(mock_output_frame_dir, exist_ok=True)
-            return mock_output_frame_dir
+        def mock_create_output_dir():
+            return self.temp_output_frames_dir
 
-        self.patcher = patch("visual_scout.extract_frames.make_output_dir", side_effect=mock_make_output_dir)
+        self.patcher = patch("visual_scout.extract_frames.create_output_dir", side_effect=mock_create_output_dir)
         self.mock_make_output_dir = self.patcher.start()
 
     def tearDown(self):
@@ -52,7 +48,7 @@ class TestExtractFrames(unittest.TestCase):
         invalid_video_file = os.path.join(self.test_input_dir, video_name)
 
         with self.assertWarns(Warning):
-            extract_frames(invalid_video_file)
+            extract_frames(self.temp_output_frames_dir, invalid_video_file)
         
         output_path = os.path.join(self.temp_output_dir, "output_frames", video_name.replace(".mov", "__frames"))
 
@@ -60,7 +56,7 @@ class TestExtractFrames(unittest.TestCase):
 
     def test_extract_frames_success(self):
         """Test if frames are extracted and saved correctly from a valid video file."""
-        extract_frames(self.valid_video_path)
+        extract_frames(self.temp_output_frames_dir, self.valid_video_path)
 
         self.assertTrue(os.path.exists(self.expected_output_dir_valid_video), "Frame directory was not created.")
         extracted_frames = [f for f in os.listdir(self.expected_output_dir_valid_video) if f.endswith(".jpg")]
@@ -69,7 +65,7 @@ class TestExtractFrames(unittest.TestCase):
     def test_extract_frames_file_not_found(self):
         """Test that extract_frames raises FileNotFoundError for a non-existent file."""
         with self.assertRaises(FileNotFoundError):
-            extract_frames("non_existent_video.mov")
+            extract_frames(self.temp_output_frames_dir, "non_existent_video.mov")
 
     def test_extract_frames_from_directory(self):
         """Test if extract_frames_from_directory correctly processes multiple video files in a directory
@@ -77,7 +73,7 @@ class TestExtractFrames(unittest.TestCase):
 
         # Ensure that invalid video isn't processed
         with self.assertWarns(Warning):
-            extract_frames_from_directory(self.test_input_dir)
+            main_extract_frames(self.test_input_dir)
 
         # Expected output directories base names
         base_name1 = "example_video_horizontal"

@@ -47,10 +47,12 @@ def process_images_in_chunks(files, input_directory, output_directory, grid_dime
 
 def create_grids_from_frames(grid_dimension, input_directory, output_directory):
     """Processes frames from given input location"""
-    
-    if not os.path.exists(input_directory):
-        raise FileNotFoundError(f"Input directory '{input_directory}' does not exist.")
 
+    print(f"input_directory:{input_directory}")
+
+    input_videos = os.listdir(input_directory)
+
+    print(f"input_videos: {input_videos}")
     for video_folder in os.listdir(input_directory):
         video_folder_path = os.path.join(input_directory, video_folder)
         if os.path.isdir(video_folder_path):  # Ensure it's a directory
@@ -68,12 +70,27 @@ def create_grids_from_frames(grid_dimension, input_directory, output_directory):
     print(f"\nGrids have been saved in: {output_directory}")
     return output_directory
 
+
 def main_generate_grids(grid_size):
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Go up one level
-    # use `output_frames/` for input and and `output_grids/` for output.
+    base_dir = os.getcwd()
+    
+    # Define input and output directories
     input_directory = os.path.join(base_dir, "output", "output_frames")
     output_directory = os.path.join(base_dir, "output", "output_grids")
+    
+    print(f"\nChecking input frames from: {input_directory}")
+
+    # Ensure input directory exists and is not empty
+    if not os.path.exists(input_directory) or not os.listdir(input_directory):
+        raise FileNotFoundError(f"❌ Error: Input frames directory '{input_directory}' does not exist or exists but is empty - be sure to generate frames before generating grids.")
+
+    # Create output directory to hold grids
+    os.makedirs(output_directory, exist_ok=True)
+    print(f"\nGrids will be saved to: {output_directory}")
+
+    # Proceed with grid generation
     create_grids_from_frames(grid_size, input_directory, output_directory)
+
 
 if __name__ == "__main__":
     main_generate_grids()
