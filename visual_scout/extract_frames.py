@@ -8,27 +8,14 @@ import warnings
 def make_frames_output_dir(video_file):
     base_name = os.path.basename(video_file)
     name_without_ext = os.path.splitext(base_name)[0]
-    frame_dir = os.path.join("output", "output_frames", f"{name_without_ext}__frames")
-    os.makedirs(frame_dir, exist_ok=True)  # created only if the video opens successfully
-    return frame_dir
+    output_frame_dir = os.path.join("output", "output_frames", f"{name_without_ext}__frames")
+    os.makedirs(output_frame_dir, exist_ok=True)
+    return output_frame_dir
 
 
 def open_video(video_file):
-    print("video_file:", video_file)
-    executed_from = os.getcwd().replace("//", "/") # handle possible leading slash
+    executed_from = os.getcwd().replace("//", "/") # handle possible leading slash in input
     video_full_path = os.path.join(executed_from, video_file)
-
-    print("\n\nvideo_full_path:", video_full_path)
-
-    # if not os.path.exists(video_full_path):
-    #     raise FileNotFoundError(f"Video file {video_full_path} not found.")
-
-    # print(f"\nProcessing: {video_file}")
-    # cap = cv2.VideoCapture(video_full_path)
-    # if not cap.isOpened():
-    #     raise IOError(f"Unable to open video file {video_full_path}")  # raise error before creating output directory
-
-    # return cap
 
     if not os.path.exists(video_full_path):
         warning_message = f"Video file not found: {video_full_path}"
@@ -63,31 +50,13 @@ def extract_frames(video_file):
         - Instead of setting a timestamp directly, it extracts frames based on index calculations.
         - The extracted frames are saved as JPEG images.
     """
-    # print("video_file:", video_file)
-    # executed_from = os.getcwd().replace("//", "/") # handle possible leading slash
-    # video_full_path = os.path.join(executed_from, video_file)
-
-    # print("\n\nvideo_full_path:", video_full_path)
-
-    # if not os.path.exists(video_full_path):
-    #     raise FileNotFoundError(f"Video file {video_full_path} not found.")
-
-    # print(f"\nProcessing: {video_file}")
-    # cap = cv2.VideoCapture(video_full_path)
-    # if not cap.isOpened():
-    #     raise IOError(f"Unable to open video file {video_full_path}")  # raise error before creating output directory
-
     cap = open_video(video_file)
 
     if not cap:
         return False
     # only make output sub dir if video was able to be opened
-    frame_dir = make_frames_output_dir(video_file)
-    
-    # base_name = os.path.basename(video_file)
-    # name_without_ext = os.path.splitext(base_name)[0]
-    # frame_dir = os.path.join("output", "output_frames", f"{name_without_ext}__frames")
-    # os.makedirs(frame_dir, exist_ok=True)  # created only if the video opens successfully
+    output_frame_dir = make_frames_output_dir(video_file)
+
 
     fps = cap.get(cv2.CAP_PROP_FPS)
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -120,7 +89,7 @@ def extract_frames(video_file):
         end_time = str(timedelta(seconds=int(timestamp + sampling_interval)))
 
         frame_filename = f"frame_{start_time.replace(':', '-')}_{end_time.replace(':', '-')}.jpg"
-        frame_path = os.path.join(frame_dir, frame_filename)
+        frame_path = os.path.join(output_frame_dir, frame_filename)
 
         if cv2.imwrite(frame_path, frame):
             print(f"Saved: {frame_path}")
@@ -138,10 +107,10 @@ def extract_frames(video_file):
 
     # ensure the output directory is removed if no frames were extracted
     if saved_frames == 0:
-        os.rmdir(frame_dir)
-        print(f"Removed empty output directory: {frame_dir}")
+        os.rmdir(output_frame_dir)
+        print(f"Removed empty output directory: {output_frame_dir}")
 
-    print(f"Frames saved: {saved_frames} in {frame_dir}")
+    print(f"Frames saved: {saved_frames} in {output_frame_dir}")
 
 
 def extract_frames_from_directory(input_dir):
@@ -162,7 +131,7 @@ def extract_frames_from_directory(input_dir):
     if not os.path.exists(input_dir):
         raise FileNotFoundError(f"Input directory {input_dir} not found.")
 
-    video_extensions = {'.mp4', '.avi', '.mov', '.mkv', '.flv', '.wmv'}  # Add more if needed
+    video_extensions = {'.mp4', '.avi', '.mov', '.mkv', '.flv', '.wmv'}
     video_files = [f for f in os.listdir(input_dir) if os.path.splitext(f)[1].lower() in video_extensions]
 
     if not video_files:
@@ -176,7 +145,7 @@ def extract_frames_from_directory(input_dir):
         print(f"\nExtracting frames from: {video_file}")
         extract_frames(video_path)
 
-    print("\nAll videos processed successfully.")
+    print("\nFrame extraction complete.")
 
 
 def main_extract_frames(input_dir):

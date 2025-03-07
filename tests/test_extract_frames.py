@@ -7,9 +7,6 @@ from visual_scout.extract_frames import extract_frames, extract_frames_from_dire
 
 
 class TestExtractFrames(unittest.TestCase):
-    """Unit tests for extract_frames.py using a pre-existing test video fixture."""
-
-
     def setUp(self):
 
         self.test_input_dir = os.path.join(os.path.dirname(__file__), "fixtures", "example_input_dir")
@@ -34,8 +31,6 @@ class TestExtractFrames(unittest.TestCase):
         output_path = os.path.join(self.output_dir_path, "output_frames", video_name.replace(".mov", "__frames"))
 
         self.assertFalse(os.path.exists(output_path), "Frame directory was not created.")
-
-        # TODO: Ensure the invalid output directory was NOT created
 
     def test_extract_frames_success(self):
         """Test if frames are extracted and saved correctly from a valid video file."""
