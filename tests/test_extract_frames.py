@@ -8,7 +8,6 @@ from visual_scout.extract_frames import extract_frames, extract_frames_from_dire
 
 class TestExtractFrames(unittest.TestCase):
     def setUp(self):
-
         self.test_input_dir = os.path.join(os.path.dirname(__file__), "fixtures", "example_input_dir")
         self.valid_video_name = "example_video_horizontal.mov"
         self.valid_video_path = os.path.join(self.test_input_dir, self.valid_video_name)
