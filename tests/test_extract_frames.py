@@ -2,22 +2,49 @@ import unittest
 import os
 import shutil
 import tempfile
-import warnings
+from unittest.mock import patch
 from visual_scout.extract_frames import extract_frames, extract_frames_from_directory
 
 
 class TestExtractFrames(unittest.TestCase):
     def setUp(self):
+        """Set up paths to fixture videos and create a temp output directory with 'output_frames'."""
         self.test_input_dir = os.path.join(os.path.dirname(__file__), "fixtures", "example_input_dir")
         self.valid_video_name = "example_video_horizontal.mov"
         self.valid_video_path = os.path.join(self.test_input_dir, self.valid_video_name)
-        print("self.valid_video_path:",self.valid_video_path)
 
-        # Define expected output directories
-        self.output_dir_path = os.path.join(self.valid_video_path.split("/tests/")[0], "output")
-        print("self.output_dir_path:", self.output_dir_path)
+        # Create a temp directory
+        self.temp_output_dir = tempfile.mkdtemp()
+        
+        # Create the /output_frames subdirectory inside the temp directory
+        self.temp_output_frames_dir = os.path.join(self.temp_output_dir, "output_frames")
+        os.makedirs(self.temp_output_frames_dir, exist_ok=True)
 
-        self.expected_output_dir_valid_video = os.path.join(self.output_dir_path, "output_frames", self.valid_video_name.replace(".mov", "__frames"))
+        print("Temporary Output Directory:", self.temp_output_dir)
+        print("Temporary Output Frames Directory:", self.temp_output_frames_dir)
+
+        # Define expected output paths within the temp directory
+        self.expected_output_dir_valid_video = os.path.join(
+            self.temp_output_frames_dir, self.valid_video_name.replace(".mov", "__frames")
+        )
+
+        # Patch make_frames_output_dir to dynamically generate the correct path
+        def mock_make_frames_output_dir(video_file):
+            base_name = os.path.basename(video_file)
+            name_without_ext = os.path.splitext(base_name)[0]
+            mock_output_frame_dir = os.path.join(self.temp_output_frames_dir, f"{name_without_ext}__frames")
+            os.makedirs(mock_output_frame_dir, exist_ok=True)
+            return mock_output_frame_dir
+
+        self.patcher = patch("visual_scout.extract_frames.make_frames_output_dir", side_effect=mock_make_frames_output_dir)
+        self.mock_make_frames_output_dir = self.patcher.start()
+
+    def tearDown(self):
+        """Remove the temp output directory after each test."""
+        self.patcher.stop()
+        if os.path.exists(self.temp_output_dir):
+            shutil.rmtree(self.temp_output_dir)
+        print(f"Deleted temporary directory: {self.temp_output_dir}")
 
     def test_extract_frames_invalid_video(self):
         """Test that extract_frames raises an IOError when given an invalid video file."""
@@ -27,7 +54,7 @@ class TestExtractFrames(unittest.TestCase):
         with self.assertWarns(Warning):
             extract_frames(invalid_video_file)
         
-        output_path = os.path.join(self.output_dir_path, "output_frames", video_name.replace(".mov", "__frames"))
+        output_path = os.path.join(self.temp_output_dir, "output_frames", video_name.replace(".mov", "__frames"))
 
         self.assertFalse(os.path.exists(output_path), "Frame directory was not created.")
 
@@ -56,8 +83,8 @@ class TestExtractFrames(unittest.TestCase):
         base_name1 = "example_video_horizontal"
         base_name2 = "example_video_vertical"
 
-        valid_output_dir1 = os.path.join(self.output_dir_path, "output_frames", f"{base_name1}__frames")
-        valid_output_dir2 = os.path.join(self.output_dir_path, "output_frames", f"{base_name2}__frames")
+        valid_output_dir1 = os.path.join(self.temp_output_dir, "output_frames", f"{base_name1}__frames")
+        valid_output_dir2 = os.path.join(self.temp_output_dir, "output_frames", f"{base_name2}__frames")
 
         print("valid_output_dir1", valid_output_dir1)
         print("valid_output_dir2", valid_output_dir2)
@@ -75,5 +102,5 @@ class TestExtractFrames(unittest.TestCase):
         # Ensure the non-video files did not trigger frame extraction
         expected_skipped_files = ["example_image.jpg", "invalid_video.mov"]
         for file in expected_skipped_files:
-            output_dir = os.path.join(self.output_dir_path, "output_frames", f"{file}__frames")
+            output_dir = os.path.join(self.temp_output_dir, "output_frames", f"{file}__frames")
             self.assertFalse(os.path.exists(output_dir), f"Non-video file {file} should not create an output directory.")

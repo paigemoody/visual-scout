@@ -57,6 +57,8 @@ def extract_frames(video_file):
     # only make output sub dir if video was able to be opened
     output_frame_dir = make_frames_output_dir(video_file)
 
+    print("\n\n:", output_frame_dir)
+
 
     fps = cap.get(cv2.CAP_PROP_FPS)
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
