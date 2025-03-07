@@ -3,6 +3,7 @@ import os
 from PIL import Image
 import math
 import shutil
+import tempfile
 from visual_scout.generate_grids import (
     create_grid,
     save_grid,
@@ -13,10 +14,39 @@ from visual_scout.generate_grids import (
 class TestGenerateGrids(unittest.TestCase):
     """Unit tests for generate_grids.."""
 
+    # def setUp(self):
+    #     """Set up paths to fixture images, temp output directory."""
+    #     self.fixture_dir = os.path.join(os.path.dirname(__file__), "fixtures", "example_output_frames")
+    #     self.output_dir = os.path.join(os.path.dirname(__file__), "tmp", "temp_grid_output")
+    #     os.makedirs(self.output_dir, exist_ok=True)
+
+    #     # Use images from fixture directory
+    #     self.video_frames_dir = os.path.join(self.fixture_dir, "example_video_horizontal_frames")
+    #     self.sample_images = sorted([
+    #         os.path.join(self.video_frames_dir, f) for f in os.listdir(self.video_frames_dir)
+    #         if f.endswith(".jpg")
+    #     ])
+
+    # def tearDown(self):
+    #     """Completely remove the /tmp directory and all its contents."""
+    #     tmp_dir = os.path.join(os.path.dirname(__file__), "tmp")
+
+    #     if os.path.exists(tmp_dir):
+    #         try:
+    #             shutil.rmtree(tmp_dir)  # Delete everything inside /tmp and remove /tmp itself
+    #             print(f"Deleted temporary test directory: {tmp_dir}")
+    #         except Exception as e:
+    #             print(f"Warning: Failed to delete {tmp_dir}: {e}")
+
+class TestGridProcessing(unittest.TestCase):
+    
     def setUp(self):
-        """Set up paths to fixture images, temp output directory."""
-        self.fixture_dir = os.path.join(os.path.dirname(__file__), "fixtures", "example_output_frames")
-        self.output_dir = os.path.join(os.path.dirname(__file__), "tmp", "temp_grid_output")
+        """Set up a temporary directory and load fixture images."""
+        self.fixture_dir = os.path.join(os.path.dirname(__file__), "fixtures", "output" ,"example_output_frames")
+
+        # Create a temporary directory for output
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.output_dir = os.path.join(self.temp_dir.name, "temp_grid_output")
         os.makedirs(self.output_dir, exist_ok=True)
 
         # Use images from fixture directory
@@ -27,15 +57,10 @@ class TestGenerateGrids(unittest.TestCase):
         ])
 
     def tearDown(self):
-        """Completely remove the /tmp directory and all its contents."""
-        tmp_dir = os.path.join(os.path.dirname(__file__), "tmp")
+        """Automatically clean up temporary directory after each test."""
+        self.temp_dir.cleanup()
+        print(f"Deleted temporary test directory: {self.temp_dir.name}")
 
-        if os.path.exists(tmp_dir):
-            try:
-                shutil.rmtree(tmp_dir)  # Delete everything inside /tmp and remove /tmp itself
-                print(f"🗑 Deleted temporary test directory: {tmp_dir}")
-            except Exception as e:
-                print(f"Warning: Failed to delete {tmp_dir}: {e}")
 
     def test_create_grid_variable_sizes(self):
         """Test that create_grid works for different grid dimensions (2x2, 3x3)."""
@@ -125,8 +150,4 @@ class TestGenerateGrids(unittest.TestCase):
 
     def test_create_grids_from_frames__3x3(self):
         self.run__create_grids_from_frames(3)
-
-    
-if __name__ == "__main__":
-    unittest.main()
 
