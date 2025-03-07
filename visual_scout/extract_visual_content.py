@@ -4,7 +4,9 @@ import time
 import sys
 from dotenv import load_dotenv
 import openai
-from visual_scout.image_utils import encode_image_to_base64, extract_timestamps, validate_filenames
+import warnings 
+from visual_scout.image_utils import extract_timestamps, validate_filenames
+from visual_scout.openai_utils import get_label_gen_prompt
 
 # Load environment variables
 load_dotenv()
@@ -16,59 +18,6 @@ if not OPENAI_KEY or not OPENAI_MODEL:
     raise ValueError("Missing required environment variables: OPENAI_KEY and OPENAI_MODEL")
 
 OPENAI_CLIENT = openai.OpenAI(api_key=OPENAI_KEY)
-
-
-def get_label_gen_prompt(image_path):
-    """Generate the OpenAI prompt for image labeling."""
-    image_bytes = encode_image_to_base64(image_path)
-    image_data = {"image": image_bytes, "resize": 768}
-
-    prompt = """
-
-    Analyze the provided image grid and generate detailed labels identifying all visible objects, actions, icons, and visible text. 
-    This is intended to help researchers efficiently review video content and determine which segments warrant further examination.
-
-    Core Requirements:
-    1. Object Identification
-    - Label all distinct visible objects individually (e.g., "man," "sunglasses," "hat," rather than "man wearing sunglasses and a hat").
-    - If an object appears multiple times across different frames, label it only once.
-
-    2. Action Recognition
-    - Identify visible actions (e.g., "protesting," "speaking into microphone," "holding flag," "walking").
-    - Where possible, associate actions with subjects (e.g., "man speaking into microphone").
-
-    3. Visible Text Extraction
-    - Extract all visible text using the format: "visible text: [text]".
-    - If text is non-English, provide both the original and a translation using the format:
-        "visible text: [original] (translation from [language]: [translation])".
-
-    4. UI & Functional Elements
-    - Label interface elements such as icons (e.g., "YouTube Like button," "Dislike button," "Subscribe button").
-    - Identify platform-specific elements (e.g., "video timestamp," "news channel logo").
-
-    Output Format:
-    Return a JSON object with a single key "labels" containing an array of categorized entries.
-
-    Example Output:
-    {
-    "labels": [
-        "man",
-        "sunglasses",
-        "hat",
-        "protesting",
-        "crowd",
-        "flag",
-        "visible text: 'Leave the canal!': Panamanians protest against Trump outside US Embassy",
-        "visible text: 'Panama is a sovereign territory'",
-        "visible text: 'Noticias' (translation from Spanish: 'News')",
-        "YouTube Like button",
-        "YouTube Dislike button",
-        "news channel logo"
-    ]
-    }
-    """
-
-    return [{"role": "user", "content": [prompt, image_data]}]
 
 
 def get_openai_labels(prompt):
@@ -131,69 +80,16 @@ def get_openai_labels(prompt):
     return {}
 
 
-def process_images(input_dir="output_grids", output_dir="output_visual_content"):
+def process_images(input_dir, output_dir):
     """
-    Process all images in the input_dir directory and generate labeled JSON files.
-
-    This function iterates through subdirectories in input_dir, extracting timestamps 
-    from image filenames, generating labels using OpenAI's API, and saving the labeled 
-    JSON output in structured directories.
-
-    Workflow:
-    1. Validate filenames using `validate_filenames()`.
-    2. Iterate through all subdirectories of `input_dir`, treating each as a video name.
-    3. Create an `OUTPUT_DIR` subdirectory for each video, if it does not already exist.
-    4. Process each image file:
-       - Skip non-image files.
-       - Extract timestamps from the filename.
-       - Generate labels using `get_openai_labels()`.
-       - Save the response as a JSON file in the corresponding output subdirectory.
-    5. After processing all images for a video, combine results into a single JSON file using `combine_visual_content_json()`.
-
-    Error Handling:
-    - Skips files that do not have a valid timestamp.
-    - Skips non-image files.
-    - Ensures output directories exist before writing files.
-
-    Output:
-    - JSON files are named using the format `visual_content_{start_time}_{end_time}.json`.
-    - Each JSON file contains an array of detected objects, actions, and visible text.
-    - A final combined JSON file is created for each video directory.
-
-    Example Output:
-    ```json
-    {
-        "labels": [
-            "man",
-            "woman",
-            "flags",
-            "crowd",
-            "banner",
-            "visible text: 'PANAMA CITY'",
-            "visible text: 'MI PAÍS, MI SOBERANÍA, MI CANAL' (translation from Spanish: 'MY COUNTRY, MY SOVEREIGNTY, MY CANAL')",
-            "visible text: 'ASOPROF'",
-            "visible text: 'SINDICATO PÚBLICO' (translation from Spanish: 'PUBLIC UNION')",
-            "hat",
-            "sunglasses",
-            "blue shirt",
-            "red shirt"
-        ]
-    }
-    ```
     """
     validate_filenames(input_dir)  # Ensure input filenames are correctly formatted before processing
 
-    ## 0. Validate correct format of input dir
-        ## Must be base_name/video_name__frames__grids/grid_<timestamp>.jpg
     ## 1. Group video names with image paths
     ## 2. Iterate through video names
     ## 2a. Iterate through images (parallelize?)
     ## 2aa. Process each image, write results to single json file
     ## 2b. Combine all json files for video
-
-    base_dir = os.path.abspath(os.path.dirname(__file__))  # Get the base directory of this script
-
-    print(os.path.join(base_dir, input_dir))
 
     for root, _, files in os.walk(input_dir):
         if not files:
@@ -209,6 +105,7 @@ def process_images(input_dir="output_grids", output_dir="output_visual_content")
 
         for file in sorted(files):
             if not file.lower().endswith((".jpg", ".jpeg", ".png")):
+                warnings.warn("")
                 continue  # Skip non-image files
 
             image_path = os.path.join(root, file)
@@ -242,77 +139,6 @@ def process_images(input_dir="output_grids", output_dir="output_visual_content")
         if output_subdir != "output_visual_content/output_grids":
             combine_visual_content_json(video_name, output_subdir, processed_files)
 
-# def process_images(input_dir=None, output_dir=None):
-#     """
-#     Process all images in the `input_dir` directory and generate labeled JSON files.
-
-#     Args:
-#         input_dir (str, optional): Path to the directory containing grids. Defaults to "output_grids".
-#         output_dir (str, optional): Path to the directory where JSON output should be stored. Defaults to "output_visual_content".
-
-#     """
-
-#     # Convert to absolute paths of defaults, if dirs not defined in call
-#     base_dir = os.path.abspath(os.path.dirname(__file__))  # Get the base directory of this script
-#     input_dir = os.path.abspath(input_dir or os.path.join(base_dir, "output_grids"))
-#     output_dir = os.path.abspath(output_dir or os.path.join(base_dir, "output_visual_content"))
-
-#     # Validate filenames before processing
-#     validate_filenames(input_dir)
-
-#     print(f"\n📂 Processing images from: {input_dir}")
-#     print(f"📂 Saving JSON output to: {output_dir}")
-
-#     print([files for root, _, files in os.walk(input_dir)])
-
-#     for root, _, files in os.walk(input_dir):
-#         print("Starting walk for {root} {files}...")
-#         if not files:
-#             print(f"{root} is empty, skipping...")
-#             continue  # Skip empty directories
-
-#         video_name = os.path.basename(root)
-#         # nix the extra part of the name to create the sub dir
-#         output_subdir = os.path.join(output_dir, video_name).replace("__frames__grids", "")
-
-#         print("\noutput_subdir: ", output_subdir)
-
-#         # Ensure output directory exists
-#         os.makedirs(output_subdir, exist_ok=True)
-
-#         processed_files = []
-
-#         for file in sorted(files):
-#             if not file.lower().endswith((".jpg", ".jpeg", ".png")):
-#                 continue  # Skip non-image files
-
-#             image_path = os.path.join(root, file)
-#             timestamps = extract_timestamps(file)
-
-#             if not timestamps:
-#                 continue  # Skip files without correct timestamps
-
-#             start_time, end_time = timestamps
-
-#             # Get labels from OpenAI
-#             prompt = get_label_gen_prompt(image_path)
-#             response = get_openai_labels(prompt)
-#             print("\n\nresponse:", response)
-
-#             # Save JSON file
-#             time_key = f"{start_time}_{end_time}"
-#             output_filename = f"visual_content_{time_key}.json"
-#             output_path = os.path.join(output_subdir, output_filename)
-
-#             with open(output_path, "w", encoding="utf-8") as json_file:
-#                 json.dump(response, json_file, indent=2)
-
-#             print(f"\n\n\n✅ Processed: {image_path}\n\nSaved to: {output_path}")
-#             processed_files.append(output_path)
-
-#         # After processing all images for this video, combine them into one JSON
-#         combine_visual_content_json(video_name, output_subdir, processed_files)
-
 
 def combine_visual_content_json(video_name, output_subdir, json_files):
     """Combine all JSON files into a single file inside the same directory as the timestamped JSONs."""
@@ -335,6 +161,29 @@ def combine_visual_content_json(video_name, output_subdir, json_files):
         json.dump(combined_data, combined_file, indent=2)
 
     print(f"📄 Combined visual content JSON saved: {combined_output_path}")
+
+
+def get_labels_main():
+
+    base_dir = os.getcwd()
+    
+    # Define input and output directories
+    input_directory = os.path.join(base_dir, "output", "output_grids")
+    output_directory = os.path.join(base_dir, "output", "output_labels")
+    
+    print(f"\nChecking input frames from: {input_directory}")
+
+    # Ensure input grid directory exists and is not empty
+    if not os.path.exists(input_directory) or not os.listdir(input_directory):
+        raise FileNotFoundError(f"❌ Error: Input grids directory '{input_directory}' does not exist or exists but is empty - be sure to generate frames before generating grids.")
+
+    # Create output directory to hold output jsons
+    os.makedirs(output_directory, exist_ok=True)
+    print(f"\nOutput label jsons will be saved to: {output_directory}")
+
+    # Proceed with label generation
+    process_images(input_directory, output_directory)
+
 
 if __name__ == "__main__":
     print("\nStarting extraction of visual content...")
