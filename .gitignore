@@ -1,6 +1,9 @@
 .DS_Store
 
 # Ignore everything inside output_*/
+/output/*
+!/output/.gitkeep
+
 output_frames/*
 output_grids/*
 output_visual_content/*

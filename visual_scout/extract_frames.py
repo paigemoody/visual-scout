@@ -31,12 +31,14 @@ def open_video(video_file):
     # return cap
 
     if not os.path.exists(video_full_path):
-        raise FileNotFoundError(f"Video file not found: {video_full_path}")
+        warning_message = f"Video file not found: {video_full_path}"
+        raise FileNotFoundError(warning_message)
 
     try:
         cap = cv2.VideoCapture(video_full_path)
         if not cap.isOpened():
-            warnings.warn(f"Unable to open video file {video_full_path}. Skipping.")
+            warning_message = f"Unable to open video file: {video_full_path}. Skipping..."
+            warnings.warn(warning_message)
             return False
         return cap
 

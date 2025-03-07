@@ -44,11 +44,11 @@ Note: This process is still under construction - for now there are three process
 
 This process will extract frames from each video in the given directory. Frame images are extracted at 2 second intervals, and written to the `output_frames` directory.
 
-1. Create a directory within `visual_scout` and add all the videos you want to process into the new directory (skip this step if you want to use example videos)
+1. Create a directory and add all the videos you want to process into the new directory (skip this step if you want to use example videos)
 
-2. Run `python3 -m visual_scout.extract_frames visual_scout/<your directory name>`
+2. Run `visual-scout extract-frames <your directory path>`
 
-    To use example videos run: `python3 -m visual_scout.extract_frames visual_scout/example_videos`
+    To use example videos run: `visual-scout extract-frames visual_scout/example_videos`
 
 ## Generate Grids 
 
