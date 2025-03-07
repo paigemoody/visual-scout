@@ -231,8 +231,6 @@ def create_output_dir():
     return full_path_output_dir
 
 
-
-
 def main_extract_frames(input_dir):
     """
     Extracts frames from all valid video files in the specified input directory.

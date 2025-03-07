@@ -2,8 +2,9 @@ import unittest
 import os
 import shutil
 import tempfile
+import unittest
 from unittest.mock import patch
-from visual_scout.extract_frames import extract_frames, main_extract_frames
+from visual_scout.extract_frames import extract_frames, main_extract_frames, get_valid_input_videos
 
 
 class TestExtractFrames(unittest.TestCase):
@@ -100,3 +101,53 @@ class TestExtractFrames(unittest.TestCase):
         for file in expected_skipped_files:
             output_dir = os.path.join(self.temp_output_dir, "output_frames", f"{file}__frames")
             self.assertFalse(os.path.exists(output_dir), f"Non-video file {file} should not create an output directory.")
+
+
+class TestGetValidInputVideos(unittest.TestCase):
+    
+    def setUp(self):
+        """Set up a temporary directory with mock video and non-video files."""
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.test_dir = self.temp_dir.name  # Store path to temp directory
+
+        # Create mock video files
+        self.valid_videos = ["video1.mp4", "video2.mov", "video3.avi"]
+        for video in self.valid_videos:
+            with open(os.path.join(self.test_dir, video), "w") as f:
+                f.write("mock video content")
+
+        # Create some non-video files
+        self.non_video_files = ["image.jpg", "document.txt", "audio.mp3"]
+        for file in self.non_video_files:
+            with open(os.path.join(self.test_dir, file), "w") as f:
+                f.write("mock file content")
+
+    def tearDown(self):
+        """Clean up and remove the temporary directory."""
+        self.temp_dir.cleanup()
+
+    def test_valid_video_files_detected(self):
+        """Test that only valid video files are detected."""
+        video_files = get_valid_input_videos(self.test_dir)
+        expected_paths = [os.path.join(self.test_dir, v) for v in self.valid_videos]
+
+        self.assertEqual(sorted(video_files), sorted(expected_paths), "Valid video files should be detected.")
+
+    def test_non_video_files_ignored(self):
+        """Test that non-video files are ignored."""
+        video_files = get_valid_input_videos(self.test_dir)
+        unexpected_paths = [os.path.join(self.test_dir, f) for f in self.non_video_files]
+
+        for path in unexpected_paths:
+            self.assertNotIn(path, video_files, f"Non-video file {path} should not be detected.")
+
+    def test_no_video_files_returns_none(self):
+        """Test that an empty directory or no valid videos returns None."""
+        empty_temp_dir = tempfile.TemporaryDirectory()
+        self.assertIsNone(get_valid_input_videos(empty_temp_dir.name), "Function should return None if no videos are found.")
+
+    def test_missing_directory_raises_error(self):
+        """Test that a nonexistent directory raises FileNotFoundError."""
+        fake_dir = os.path.join(self.test_dir, "nonexistent_dir")
+        with self.assertRaises(FileNotFoundError):
+            get_valid_input_videos(fake_dir)
