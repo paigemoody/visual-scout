@@ -1,5 +1,6 @@
 import argparse
 from ast import Return
+from distutils import extension
 import cv2
 import os
 from datetime import timedelta
@@ -129,18 +130,29 @@ def extract_frames_from_directory(input_dir):
     Raises:
         FileNotFoundError: If the specified input directory does not exist.
     """
-    print(f"\n\nExtracting from {input_dir}...")
+    print(f"\n\nValidating files in {input_dir}...")
     if not os.path.exists(input_dir):
         raise FileNotFoundError(f"Input directory {input_dir} not found.")
 
     video_extensions = {'.mp4', '.avi', '.mov', '.mkv', '.flv', '.wmv'}
-    video_files = [f for f in os.listdir(input_dir) if os.path.splitext(f)[1].lower() in video_extensions]
+
+    video_files = []
+
+    all_files = os.listdir(input_dir)
+    print(f"\n\nTotal input files: {len(all_files)}\n")
+
+    for f in all_files:
+        extension = os.path.splitext(f)[1].lower()
+        if extension in video_extensions:
+            video_files.append(f)
+        else:
+            print(f"Non-video file to be ignored: {f}")
 
     if not video_files:
         print("No video files found in the directory.")
         return
 
-    print(f"Found {len(video_files)} video files. Processing...")
+    print(f"\nTotal input video files {len(video_files)} \n\nStarting processing...")
 
     for video_file in video_files:
         video_path = os.path.join(input_dir, video_file)
