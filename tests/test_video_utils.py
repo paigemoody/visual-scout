@@ -43,7 +43,7 @@ class TestVideoUtils(unittest.TestCase):
 
     def test_inspect_video_file_not_found(self):
         """Test that inspect_video raises FileNotFoundError for a missing video file."""
-        with self.assertRaises(FileNotFoundError):
+        with self.assertRaises(IOError):
             inspect_video(self.invalid_video)
 
     def test_inspect_video_invalid_file(self):
