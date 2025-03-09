@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from unittest.mock import patch, MagicMock
 from visual_scout.extract_labels import (
+    # TODO add more tests and fix the commented out ones...
     process_images,
     get_openai_labels,
     get_labels_main,
