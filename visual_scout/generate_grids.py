@@ -1,9 +1,7 @@
 import os
-import re
-import argparse
 from PIL import Image
-
-from .video_utils import get_image_files, extract_timestamps
+from visual_scout.image_utils import extract_timestamps
+from visual_scout.video_utils import get_image_files
 
 def create_grid(images, frame_width, frame_height, grid_dimension):
     """Create a grid image from a list of individual images."""
@@ -35,24 +33,28 @@ def process_images_in_chunks(files, input_directory, output_directory, grid_dime
         frame_width, frame_height = images[0].size
         grid = create_grid(images, frame_width, frame_height, grid_dimension)
 
-        start_timestamp, _ = extract_timestamps(chunk[0])
-        _, end_timestamp = extract_timestamps(chunk[-1])
+        first_file_in_chunk = chunk[0]
+        last_file_in_chunk = chunk[-1]
+        first_file_in_chunk_timestamps = extract_timestamps(first_file_in_chunk)
+        last_file_in_chunk_timestamps = extract_timestamps(last_file_in_chunk)
+
+        start_timestamp = first_file_in_chunk_timestamps[0]
+        end_timestamp = last_file_in_chunk_timestamps[-1]
 
         save_grid(grid, output_directory, start_timestamp, end_timestamp)
 
-def create_grids_from_frames(grid_dimension):
-    """Processes frames from `output_frames/`, saving grids in `output_grids/{video_name}__grids/`."""
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Go up one level
-    input_directory = os.path.join(base_dir, "output_frames")
-    output_directory = os.path.join(base_dir, "output_grids")
+def create_grids_from_frames(grid_dimension, input_directory, output_directory):
+    """Processes frames from given input location"""
 
-    if not os.path.exists(input_directory):
-        raise FileNotFoundError(f"Input directory '{input_directory}' does not exist.")
+    print(f"input_directory:{input_directory}")
 
+    input_videos = os.listdir(input_directory)
+
+    print(f"input_videos: {input_videos}")
     for video_folder in os.listdir(input_directory):
         video_folder_path = os.path.join(input_directory, video_folder)
         if os.path.isdir(video_folder_path):  # Ensure it's a directory
-            print(f"Processing frames from: {video_folder}")
+            print(f"\nProcessing frames from: {video_folder}")
 
             # Define output directory for this specific video
             video_grid_dir = os.path.join(output_directory, f"{video_folder}__grids")
@@ -63,20 +65,30 @@ def create_grids_from_frames(grid_dimension):
             else:
                 print(f"No image files found in '{video_folder_path}'.")
 
-    print(f"Grids have been saved in: {output_directory}")
+    print(f"\nGrids have been saved in: {output_directory}")
+    return output_directory
 
-def main():
-    """Parses command-line arguments and runs the grid generation process."""
-    parser = argparse.ArgumentParser(description="Generate image grids from extracted frames.")
-    parser.add_argument(
-        "--grid-size",
-        type=int,
-        default=3,
-        help="Grid dimension (NxN), default is 3x3"
-    )
 
-    args = parser.parse_args()
-    create_grids_from_frames(args.grid_size)
+def main_generate_grids(grid_size):
+    base_dir = os.getcwd()
+    
+    # Define input and output directories
+    input_directory = os.path.join(base_dir, "output", "output_frames")
+    output_directory = os.path.join(base_dir, "output", "output_grids")
+    
+    print(f"\nChecking input frames from: {input_directory}")
+
+    # Ensure input directory exists and is not empty
+    if not os.path.exists(input_directory) or not os.listdir(input_directory):
+        raise FileNotFoundError(f"❌ Error: Input frames directory '{input_directory}' does not exist or exists but is empty - be sure to generate frames before generating grids.")
+
+    # Create output directory to hold grids
+    os.makedirs(output_directory, exist_ok=True)
+    print(f"\nGrids will be saved to: {output_directory}")
+
+    # Proceed with grid generation
+    create_grids_from_frames(grid_size, input_directory, output_directory)
+
 
 if __name__ == "__main__":
-    main()
+    main_generate_grids()

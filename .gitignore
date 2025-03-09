@@ -1,14 +1,8 @@
 .DS_Store
 
-# Ignore everything inside output_*/
-output_frames/*
-output_grids/*
-output_visual_content/*
+/pip-wheel-metadata/*
 
-# But keep the .gitkeep files
-!output_frames/.gitkeep
-!output_grids/.gitkeep
-!output_visual_content/.gitkeep
+/output/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
