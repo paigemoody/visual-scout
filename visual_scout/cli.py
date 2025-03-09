@@ -1,6 +1,6 @@
 import argparse
 from visual_scout.extract_frames import main_extract_frames
-from visual_scout.extract_visual_content import get_labels_main
+from visual_scout.extract_labels import get_labels_main
 from visual_scout.generate_grids import main_generate_grids
 
 def main():
@@ -19,8 +19,25 @@ def main():
 
     # Process Visual Content (generate labels)
     parser_process = subparsers.add_parser("generate-labels", help="Process image grids to generate labels")
-    parser_process.set_defaults(func=lambda args: get_labels_main())
 
+    # Add required OpenAI key argument
+    parser_process.add_argument(
+        "--open-ai-key",
+        type=str,
+        required=True,
+        help="API key for OpenAI authentication (required)."
+    )
+
+    # Add optional OpenAI model argument with a default value
+    parser_process.add_argument(
+        "--open-ai-model",
+        type=str,
+        default="gpt-4o-mini",
+        help="Specify the OpenAI model to use (default: gpt-4o-mini)."
+    )
+
+    # Ensure function gets args
+    parser_process.set_defaults(func=lambda args: get_labels_main(args.open_ai_key, args.open_ai_model))
     # Parse arguments
     args = parser.parse_args()
 

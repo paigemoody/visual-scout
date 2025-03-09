@@ -1,26 +1,14 @@
 import os
 import json
 import time
-import sys
 from dotenv import load_dotenv
 import openai
 import warnings 
 from visual_scout.image_utils import extract_timestamps, validate_filenames
 from visual_scout.openai_utils import get_label_gen_prompt
 
-# Load environment variables
-load_dotenv()
 
-OPENAI_KEY = os.getenv("OPENAI_KEY")
-OPENAI_MODEL = os.getenv("OPENAI_MODEL")
-
-if not OPENAI_KEY or not OPENAI_MODEL:
-    raise ValueError("Missing required environment variables: OPENAI_KEY and OPENAI_MODEL")
-
-OPENAI_CLIENT = openai.OpenAI(api_key=OPENAI_KEY)
-
-
-def get_openai_labels(prompt):
+def get_openai_labels(prompt, open_ai_key, open_ai_model):
     """
     Call the OpenAI API to generate labels for a given image based on the provided prompt.
 
@@ -53,8 +41,10 @@ def get_openai_labels(prompt):
         }
     
     """
+    openai_client, open_ai_model = get_open_ai_client_model(open_ai_key, open_ai_model)
+
     params = {
-        "model": OPENAI_MODEL,
+        "model": open_ai_model,
         "messages": prompt,
         "max_tokens": 4096,
         "response_format": {"type": "json_object"}
@@ -62,7 +52,7 @@ def get_openai_labels(prompt):
 
     for attempt in range(3):  # Retry up to 3 times
         try:
-            response = OPENAI_CLIENT.chat.completions.create(**params)
+            response = openai_client.chat.completions.create(**params)
             response_json = json.loads(response.model_dump_json())
 
             if refusal := response_json["choices"][0]["message"].get("refusal"):
@@ -80,7 +70,7 @@ def get_openai_labels(prompt):
     return {}
 
 
-def process_images(input_dir, output_dir):
+def process_images(input_dir, output_dir, open_ai_key, open_ai_model): 
     """
     """
     validate_filenames(input_dir)  # Ensure input filenames are correctly formatted before processing
@@ -118,10 +108,10 @@ def process_images(input_dir, output_dir):
 
             # Get labels from OpenAI
             prompt = get_label_gen_prompt(image_path)
-            # response = get_openai_labels(prompt)
 
-            # TEMP - USE THIS TO TEST without sending API requests
-            response = {'labels': ['man', 'woman', 'flags', 'crowd', 'banner', "visible text: 'PANAMA CITY'", "visible text: 'MI PAÍS, MI SOBERANÍA, MI CANAL' (translation from Spanish: 'MY COUNTRY, MY SOVEREIGNTY, MY CANAL')", "visible text: 'ASOPROF'", "visible text: 'SINDICATO PÚBLICO' (translation from Spanish: 'PUBLIC UNION')", 'hat', 'sunglasses', 'blue shirt', 'red shirt']}
+            # TEMP - USE TEST THIS TO TEST without sending API requests
+            response = get_openai_labels(prompt, open_ai_key, open_ai_model)
+            # response = {'labels': ['man', 'woman', 'flags', 'crowd', 'banner', "visible text: 'PANAMA CITY'", "visible text: 'MI PAÍS, MI SOBERANÍA, MI CANAL' (translation from Spanish: 'MY COUNTRY, MY SOVEREIGNTY, MY CANAL')", "visible text: 'ASOPROF'", "visible text: 'SINDICATO PÚBLICO' (translation from Spanish: 'PUBLIC UNION')", 'hat', 'sunglasses', 'blue shirt', 'red shirt']}
 
             # Save JSON file
             time_key = f"{start_time}_{end_time}"
@@ -163,7 +153,26 @@ def combine_visual_content_json(video_name, output_subdir, json_files):
     print(f"📄 Combined visual content JSON saved: {combined_output_path}")
 
 
-def get_labels_main():
+def get_open_ai_client_model(open_ai_key, open_ai_model):
+    if not open_ai_model:
+        open_ai_model = os.getenv("OPENAI_MODEL")
+
+    if not open_ai_key:
+        # If not called from cli with api key, get from env
+        # Load environment variables
+        load_dotenv()
+
+        open_ai_key = os.getenv("OPENAI_KEY")
+
+    if not open_ai_key or not open_ai_model:
+        raise ValueError("Missing required environment variables: open_ai_key and openai_model")
+
+    openai_client = openai.OpenAI(api_key=open_ai_key)
+
+    return openai_client, open_ai_model
+
+
+def get_labels_main(open_ai_key, open_ai_model):
 
     base_dir = os.getcwd()
     
@@ -182,7 +191,7 @@ def get_labels_main():
     print(f"\nOutput label jsons will be saved to: {output_directory}")
 
     # Proceed with label generation
-    process_images(input_directory, output_directory)
+    process_images(input_directory, output_directory, open_ai_key, open_ai_model)
 
 
 if __name__ == "__main__":

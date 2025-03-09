@@ -52,17 +52,17 @@ This process will extract frames from each video in the given directory. Frame i
 
 ## Generate Grids 
 
-This process will combine extracted frames into sequential image grids, defaulting to 3x3 grids. Grid images are written to the `output_grids` directory. 
+This process will combine extracted frames into sequential image grids, defaulting to 3x3 grids. Grid images are written to a newly created directory called `outputs/`, in a sub directory called `output_grids/`. 
 
 Note: you may want to play around with grid size to figure out the ideal level of detail required for the specific AI model you're using to extract data from the images.
 
 1. Generate grids
 
-    To use default grid size run: `python3 -m visual_scout.generate_grids`
+    To use default grid size run: `visual-scout generate-grids`
 
-    To use a different grid size run: `python3 -m visual_scout.generate_grids --grid-size <grid size intger>` 
+    To use a different grid size run: `visual-scout generate-grids --grid-size <grid size intger>` 
 
-    For example: `python3 -m visual_scout.generate_grids --grid-size <grid size intger>`
+    For example: `visual-scout generate-grids --grid-size <grid size intger>`
 
 ## Extract Visual Content
 
@@ -82,8 +82,9 @@ This is where you will use an AI model (just OpenAI is available for now) to ext
 
 3. Determine [which model](https://platform.openai.com/docs/models) you want to use and update your .env to reflect your choice. I'd reccomend starting with `gpt-4o-mini` because it works reasonably well and is significantly cheaper (especially important if you'll be processing a lot of videos!). 
 
-4. Extract visual content by running: `python3 -m visual_scout.extract_visual_content` 
+4. Extract visual content using the CLI by running: `visual-scout generate-labels --open-ai-key=<your API key>` 
 
+    - Optional additional arg `--open-ai-model` if you want to specify a model. The default is `gpt-4o-mini`
     - This will send the grids produced in the previous step to OpenAI along with a prompt which asks it to return a json object containing everything it sees in the video. 
     - The output is:
         - An individual json file containing the visual elements for one individual grid file, and 
