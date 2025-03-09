@@ -48,7 +48,7 @@ This process will extract frames from each video in the given directory. Frame i
 
 2. Run `visual-scout extract-frames <your directory path>`
 
-    To use example videos run: `visual-scout extract-frames visual_scout/example_videos`
+    To use example videos run: `visual-scout extract-frames visual_scout/example_input`
 
 ## Generate Grids 
 

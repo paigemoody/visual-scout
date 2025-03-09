@@ -75,12 +75,6 @@ def process_images(input_dir, output_dir, open_ai_key, open_ai_model):
     """
     validate_filenames(input_dir)  # Ensure input filenames are correctly formatted before processing
 
-    ## 1. Group video names with image paths
-    ## 2. Iterate through video names
-    ## 2a. Iterate through images (parallelize?)
-    ## 2aa. Process each image, write results to single json file
-    ## 2b. Combine all json files for video
-
     for root, _, files in os.walk(input_dir):
         if not files:
             continue

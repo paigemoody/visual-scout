@@ -1,6 +1,5 @@
 import cv2
 import os
-import math
 import re
 from datetime import timedelta
 
@@ -28,7 +27,7 @@ def inspect_video(video_file):
         - Video duration in HH:MM:SS format.
 
     Example:
-        inspect_video("visual_scout/example_videos/example_video_horizontal.mov")
+        inspect_video("visual_scout/example_input/example_video_horizontal.mov")
 
     Output Example:
         ```
