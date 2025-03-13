@@ -201,7 +201,6 @@ def extract_frames(output_frames_base_path, media_file):
         # TODO - rn this gets all frames from GIFs - overkill - make it smarter
         # Handle animated GIF case - in the Pillow (PIL) package, a GIF is considered an image
         print(f"\n\nExtracting frames from animated GIF: {media_file}...")
-        # gif = Image.open(media_file)
         gif = open_gif(media_file)
         frame_index = 0
 
