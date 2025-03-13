@@ -4,7 +4,29 @@ from visual_scout.image_utils import extract_timestamps
 from visual_scout.video_utils import get_image_files
 
 def create_grid(images, frame_width, frame_height, grid_dimension):
-    """Create a grid image from a list of individual images."""
+    """
+    Creates a composite grid image from a list of individual images.
+
+    This function arranges a list of images into a square grid format, where 
+    each image is placed at its respective position based on the given 
+    `grid_dimension`. The resulting grid is created with a white background.
+
+    Args:
+        images (list): A list of PIL Image objects to be arranged in the grid.
+        frame_width (int): The width of each individual image in pixels.
+        frame_height (int): The height of each individual image in pixels.
+        grid_dimension (int): The number of images per row and column in the grid (NxN).
+
+    Returns:
+        PIL.Image.Image: A new image object containing the arranged grid.
+
+    Notes:
+        - The function assumes `images` contains enough images to fill the grid.
+        - If the number of images is less than `grid_dimension^2`, the remaining grid 
+          spaces will remain blank (white background).
+        - Images are placed in row-major order.
+    """
+
     grid_width = grid_dimension * frame_width
     grid_height = grid_dimension * frame_height
     grid = Image.new("RGB", (grid_width, grid_height), "white")
