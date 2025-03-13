@@ -1,8 +1,7 @@
 import unittest
 import os
 from PIL import Image
-import math
-import shutil
+from math import ceil, sqrt
 import tempfile
 from visual_scout.generate_grids import (
     create_grid,
@@ -110,7 +109,7 @@ class TestGridProcessing(unittest.TestCase):
 
                 # Count input frames and expected output grids
                 frame_files = os.listdir(os.path.join(self.fixture_dir, video_folder))
-                expected_output_grids = math.ceil(len(frame_files) / (grid_size ** 2))
+                expected_output_grids = ceil(len(frame_files) / (grid_size ** 2))
 
                 output_grids = os.listdir(video_output_subdir)
 
@@ -124,4 +123,69 @@ class TestGridProcessing(unittest.TestCase):
 
     def test_create_grids_from_frames__3x3(self):
         self.run__create_grids_from_frames(3)
+
+
+class TestCreateGrid(unittest.TestCase):
+    def setUp(self):
+        """Set up test images of fixed size."""
+        self.frame_width = 100
+        self.frame_height = 100
+        self.max_grid_dim = 3  # Max grid dimension (3x3)
+
+        # Generate test images (solid black squares)
+        self.images = [Image.new("RGB", (self.frame_width, self.frame_height), "black") for _ in range(10)]
+
+    def test_single_image_grid(self):
+        """Test that a single image results in a 1x1 grid."""
+        grid = create_grid(self.images[:1], self.frame_width, self.frame_height, self.max_grid_dim)
+        self.assertEqual(grid.size, (self.frame_width, self.frame_height))
+
+    def test_exact_square_number_of_images(self):
+        """Test grids where the number of images is a perfect square."""
+        grid = create_grid(self.images[:4], self.frame_width, self.frame_height, self.max_grid_dim)
+        self.assertEqual(grid.size, (2 * self.frame_width, 2 * self.frame_height))  # 2x2 grid
+
+        grid = create_grid(self.images[:9], self.frame_width, self.frame_height, self.max_grid_dim)
+        self.assertEqual(grid.size, (3 * self.frame_width, 3 * self.frame_height))  # 3x3 grid
+
+    def test_non_square_number_of_images(self):
+        """Test cases where the number of images is not a perfect square."""
+        grid = create_grid(self.images[:2], self.frame_width, self.frame_height, self.max_grid_dim)
+        self.assertEqual(grid.size, (2 * self.frame_width, 2 * self.frame_height))  # 2x2 grid
+
+        grid = create_grid(self.images[:3], self.frame_width, self.frame_height, self.max_grid_dim)
+        self.assertEqual(grid.size, (2 * self.frame_width, 2 * self.frame_height))  # 2x2 grid
+
+        grid = create_grid(self.images[:5], self.frame_width, self.frame_height, self.max_grid_dim)
+        self.assertEqual(grid.size, (3 * self.frame_width, 3 * self.frame_height))  # 3x3 grid
+
+    def test_grid_limited_by_max_dimension(self):
+        """Ensure the grid respects the max dimension limit."""
+        grid = create_grid(self.images[:10], self.frame_width, self.frame_height, 3)  # Needs 4x4 but limited to 3x3
+        self.assertEqual(grid.size, (3 * self.frame_width, 3 * self.frame_height))
+
+        grid = create_grid(self.images[:10], self.frame_width, self.frame_height, 4)  # Max 4x4 should be used
+        self.assertEqual(grid.size, (4 * self.frame_width, 4 * self.frame_height))
+
+    def test_blank_spaces_filled_correctly(self):
+        """Ensure images are placed left-to-right, top-to-bottom, and remaining spaces stay blank."""
+        grid = create_grid(self.images[:7], self.frame_width, self.frame_height, 3)  # Needs 3x3 grid
+
+        # Check that the last row has blank spaces
+        blank_pixel = grid.getpixel((2 * self.frame_width + 1, 2 * self.frame_height + 1))  # Sample blank area
+        self.assertEqual(blank_pixel, (255, 255, 255))  # Ensure blank areas remain white
+
+    def test_zero_images(self):
+        """Ensure an empty grid is handled gracefully."""
+        grid = create_grid([], self.frame_width, self.frame_height, self.max_grid_dim)
+        self.assertEqual(grid.size, (self.frame_width, self.frame_height))  # Should return a 1x1 blank grid
+
+    def test_odd_aspect_ratio(self):
+        """Ensure images of different aspect ratios still fit correctly, with blank space if necessary."""
+        odd_aspect_image = Image.new("RGB", (self.frame_width, int(self.frame_height * 1.5)), "black")
+        grid = create_grid([odd_aspect_image], self.frame_width, self.frame_height, self.max_grid_dim)
+
+        self.assertEqual(grid.size, (self.frame_width, self.frame_height))  # Still 1x1 grid
+
+
 
