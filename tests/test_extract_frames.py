@@ -52,10 +52,7 @@ class TestExtractFrames(unittest.TestCase):
             extract_frames(self.temp_output_frames_dir, invalid_video_file)
 
         output_path = os.path.join(self.temp_output_dir, "output_frames", video_name.replace(".mov", "__frames"))
-        print("output_path:", output_path)
         output_path_exists = os.path.exists(output_path)
-        print("output_path_exists:", output_path_exists)
-
         self.assertFalse(output_path_exists, "Frame directory was not created.")
 
     def test_extract_frames_success(self):
