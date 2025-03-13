@@ -2,37 +2,31 @@ import cv2
 import os
 from datetime import timedelta
 import warnings
+import shutil
+from PIL import Image, UnidentifiedImageError
 
 
 def open_video(video_full_path):
     """
     Opens a video file using OpenCV and returns a VideoCapture object.
 
-    This function attempts to open a video file and return an OpenCV `VideoCapture` object.
-    It ensures the file exists before proceeding and handles errors related to file access 
-    and OpenCV processing. If the file cannot be opened, a warning is issued, and `False` 
-    is returned.
+    Ensures the file exists before attempting to open it. If OpenCV fails to open 
+    the file, a warning is issued, and `False` is returned.
 
     Args:
-        video_full_path (str): The full path to the video file.
+        video_full_path (str): Full path to the video file.
 
     Returns:
-        cv2.VideoCapture or bool: 
+        cv2.VideoCapture or bool:
             - A `cv2.VideoCapture` object if the video is successfully opened.
-            - `False` if the video cannot be opened due to file access issues or OpenCV errors.
+            - `False` if the video cannot be opened.
 
     Raises:
-        FileNotFoundError: If the video file does not exist at the specified path.
-        Warning: If OpenCV fails to open the video file, a warning is issued instead of an exception.
-
-    Error Handling:
-        - If the file does not exist, a `FileNotFoundError` is raised.
-        - If OpenCV cannot open the file, a warning is logged, and `False` is returned.
-        - If OpenCV encounters an internal error while opening the file, a warning is issued.
+        FileNotFoundError: If the video file does not exist.
 
     Notes:
-        - The function ensures the file exists before attempting to open it.
-        - OpenCV warnings are issued instead of raising exceptions for non-fatal errors.
+        - If OpenCV encounters an error, a warning is issued instead of an exception.
+        - The function returns `False` for unreadable or corrupted videos.
     """
 
     if not os.path.exists(video_full_path):
@@ -41,156 +35,222 @@ def open_video(video_full_path):
 
     try:
         cap = cv2.VideoCapture(video_full_path)
+        print(f"cap: {cap.isOpened()}")
         if not cap.isOpened():
+            print("cap not opened")
             warning_message = f"\n\nUnable to open video file: {video_full_path}. Skipping..."
             warnings.warn(warning_message)
-            return False
+            print("sent warning") 
+            return False       
         return cap
 
     except cv2.error as e:
+        print("sending warning now!!")
         warnings.warn(f"OpenCV encountered an error while opening video {video_full_path}: {str(e)}") 
         return False
 
-
-def extract_frames(output_frames_base_path, video_file):
+def open_gif(gif_full_path):
     """
-    Extracts frames from a video at fixed 2-second intervals and saves them as image files.
+    Opens a GIF image file using PIL (Pillow).
 
-    This function processes a given video file, extracts frames at a defined interval, 
-    and saves them as images in an output directory. It ensures the output directory 
-    is removed if no frames are successfully extracted.
+    Args:
+        gif_full_path (str): Full path to the GIF file.
+
+    Returns:
+        Image.Image: A PIL Image object if the file is successfully opened.
+        None: If the file cannot be opened.
+
+    Raises:
+        FileNotFoundError: If the file does not exist.
+    """
+    if not os.path.exists(gif_full_path):
+        raise FileNotFoundError(f"Image file not found: {gif_full_path}")
+
+    try:
+        gif = Image.open(gif_full_path)
+        gif.verify()  # ensure the file is not corrupted
+        return Image.open(gif_full_path)  # reopen because verify() closes the file
+    except (UnidentifiedImageError, OSError) as e:
+        warnings.warn(f"Unable to open GIF file: {gif_full_path}. Skipping... Error: {e}")
+        return None
+
+
+def extract_frames(output_frames_base_path, media_file):
+    """
+    Extracts frames from a video, animated GIF, or processes a single image file.
+
+    If the input is a video, frames are extracted at fixed 2-second intervals.
+    If the input is a static image, it is treated as a single "frame" and saved accordingly.
+    If the input is an animated GIF, all frames are extracted, but frame timing may vary.
 
     Args:
         output_frames_base_path (str): The base directory where extracted frames will be saved.
-        video_file (str): The path to the input video file.
+        media_file (str): The path to the input video or image file.
 
     Raises:
-        FileNotFoundError: If the specified video file does not exist.
-        IOError: If the video file cannot be opened or read.
+        FileNotFoundError: If the specified file does not exist.
+        IOError: If the media file cannot be opened or read.
         Warning: If a frame cannot be read or saved.
 
     Processing Steps:
-        1. Opens the video file and verifies it is readable.
-        2. Computes FPS and total frame count to determine the video duration.
-        3. Extracts frames at every 2-second interval.
-        4. Saves each extracted frame as a JPEG file, named using timestamps.
-        5. Removes up the output directory if no frames were saved.
+        1. Determines whether the input is a video, animated GIF, or static image.
+        2. If it's a static image, saves it as a single frame.
+        3. If it's a video, extracts frames at every 2-second interval.
+        4. If it's an animated GIF, extracts all frames sequentially.
+        5. Saves extracted frames with timestamped filenames.
+        6. Removes the output directory if no frames were saved.
 
     Notes:
-        - Frames are extracted based on calculated frame indices, ensuring synchronization with FPS.
-        - If a frame cannot be read or saved, a warning is issued, and the function continues.
-        - The function handles floating-point precision issues when computing timestamps.
+        - Frames are extracted based on calculated frame indices for videos.
+        - GIFs do not have a fixed FPS like videos; instead, they store frame durations, which can vary per frame.
         - If no frames are successfully saved, the created output directory is deleted.
 
-    Example:
-        >>> extract_frames("output/output_frames", "example_video.mov")
 
     Output Directory Structure:
         output_frames_base_path/
         ├── example_video__frames/
         │   ├── frame_00-00-00_00-00-02.jpg
         │   ├── frame_00-00-02_00-00-04.jpg
-        │   ├── ...
+        ├── example_image__frames/
+        │   ├── frame_0-00-00_0-00-00.jpg
+        ├── example_animation__frames/
+        │   ├── frame_00-00-00.jpg
+        │   ├── frame_00-00-01.jpg
     """
-
-    print(f"\n\nExtracting frames from {video_file}...")
-    cap = open_video(video_file)
-
-    if not cap:
-        return False
     
-    # only make output sub dir for video if video was able to be opened
-    name_without_ext = video_file.split("/")[-1].split(".")[0]
-    output_frames_video_path = os.path.join(output_frames_base_path, f"{name_without_ext}__frames")
-
-    print("\n\noutput_frames_video_path:", output_frames_video_path)
-    # make output dir 
-    os.makedirs(output_frames_video_path, exist_ok=True)
-
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    duration = frame_count / fps
-
-    print(f"Video FPS: {fps}")
-    print(f"Total Frames: {frame_count}")
-    print(f"Video Duration: {timedelta(seconds=duration)}")
-
-    sampling_interval = 2  # Extract a frame every 2 seconds
-    frame_interval = round(fps * sampling_interval)  # Force rounding to nearest integer frame count
-
-    print(f"Extracting every {frame_interval} frames ({sampling_interval} seconds interval)")
+    if not os.path.exists(media_file):
+        raise FileNotFoundError(f"Media file {media_file} not found.")
     
-    frame_index = 0
-    saved_frames = 0
+    name_without_ext = os.path.splitext(os.path.basename(media_file))[0]
+    output_frames_media_path = os.path.join(output_frames_base_path, f"{name_without_ext}__frames")
+    os.makedirs(output_frames_media_path, exist_ok=True)
+    
+    # Determine if input is a video, animated GIF, or static image
+    video_extensions = {'.mp4', '.avi', '.mov', '.mkv', '.flv', '.wmv'}
+    image_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.webp'}
+    gif_extension = '.gif'
+    extension = os.path.splitext(media_file)[1].lower()
+    
+    if extension in image_extensions:
+        # Handle static image case
+        frame_filename = "frame_0-00-00_0-00-00.jpg"
+        frame_path = os.path.join(output_frames_media_path, frame_filename)
+        shutil.copy(media_file, frame_path)
+        print(f"Saved image as frame: {frame_path}")
+        return
+    
+    elif extension in video_extensions:
+        # Handle video case
+        print(f"\n\nExtracting frames from {media_file}...")
+        saved_frames = 0
+        cap = open_video(media_file)
+        print("cap:", cap)
+        if cap:
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            duration = frame_count / fps
 
-    while frame_index < frame_count:  # Ensure we do not go beyond available frames
-        print(f"Processing frame {frame_index} / {frame_count}")  # Debug log
+            print(f"Video FPS: {fps}")
+            print(f"Total Frames: {frame_count}")
+            print(f"Video Duration: {timedelta(seconds=duration)}")
 
-        cap.set(cv2.CAP_PROP_POS_FRAMES, min(frame_index, frame_count - 1))  # Avoid overshooting
-        ret, frame = cap.read()
+            sampling_interval = 2  # Extract a frame every 2 seconds
+            frame_interval = round(fps * sampling_interval)  # Force rounding to nearest integer frame count
+
+            print(f"Extracting every {frame_interval} frames ({sampling_interval} seconds interval)")
+            
+            frame_index = 0
+
+            while frame_index < frame_count:
+                print(f"Processing frame {frame_index} / {frame_count}")
+                cap.set(cv2.CAP_PROP_POS_FRAMES, min(frame_index, frame_count - 1))
+                ret, frame = cap.read()
+                
+                if not ret:
+                    print(f"Warning: Could not read frame at index {frame_index}. Skipping...")
+                    break
+
+                timestamp = round(frame_index / fps, 2)
+                start_time = str(timedelta(seconds=int(timestamp)))
+                end_time = str(timedelta(seconds=int(timestamp + sampling_interval)))
+
+                frame_filename = f"frame_{start_time.replace(':', '-')}_{end_time.replace(':', '-')}.jpg"
+                frame_path = os.path.join(output_frames_media_path, frame_filename)
+                
+                if cv2.imwrite(frame_path, frame):
+                    print(f"Saved: {frame_path}")
+                    saved_frames += 1
+                else:
+                    warnings.warn(f"Error saving: {frame_filename}")
+
+                frame_index += frame_interval
+                if frame_index >= frame_count:
+                    print("Reached the last frame, stopping extraction.")
+                    break
+
+            cap.release()
         
-        if not ret:
-            print(f"Warning: Could not read frame at index {frame_index}. Skipping...")
-            break  # Exit loop to avoid infinite error printing
-
-        timestamp = round(frame_index / fps, 2)  # Round to avoid floating point drift
-        start_time = str(timedelta(seconds=int(timestamp)))  # Ensure clean HH-MM-SS format
-        end_time = str(timedelta(seconds=int(timestamp + sampling_interval)))
-
-        frame_filename = f"frame_{start_time.replace(':', '-')}_{end_time.replace(':', '-')}.jpg"
-        frame_path = os.path.join(output_frames_video_path, frame_filename)
-        
-
-        if cv2.imwrite(frame_path, frame):
-            print(f"Saved: {frame_path}")
-            saved_frames += 1
+        if saved_frames == 0:
+            os.rmdir(output_frames_media_path)
+            print(f"Removed empty output directory: {output_frames_media_path}")
         else:
-            warning_message = f"Error saving: {frame_filename}"
-            warnings.warn(warning_message)
-
-        frame_index += frame_interval  # Jump to the next interval
-
-        if frame_index >= frame_count:  # Safety check
-            print("Reached the last frame, stopping extraction.")
-            break
-
-    cap.release()
-
-    # ensure the output directory is removed if no frames were extracted
-    if saved_frames == 0:
-        os.rmdir(output_frames_base_path)
-        print(f"Removed empty output directory: {output_frames_base_path}")
-
-    print(f"Frames saved: {saved_frames} in {output_frames_base_path}")
+            print(f"Frames saved: {saved_frames} in {output_frames_media_path}")
+        return
     
+    elif extension == gif_extension:
+        # TODO - rn this gets all frames from GIFs - overkill - make it smarter
+        # Handle animated GIF case - in the Pillow (PIL) package, a GIF is considered an image
+        print(f"\n\nExtracting frames from animated GIF: {media_file}...")
+        # gif = Image.open(media_file)
+        gif = open_gif(media_file)
+        frame_index = 0
 
-def get_valid_input_videos(full_path_input_dir):
+        while True:
+            frame_filename = f"frame_00-00-{frame_index}.jpg"
+            frame_path = os.path.join(output_frames_media_path, frame_filename)
+            gif.seek(frame_index)
+            gif.convert("RGB").save(frame_path)
+            print(f"Saved: {frame_path}")
+            frame_index += 1
+
+            try:
+                gif.seek(frame_index)
+            except EOFError:
+                break
+        
+        return
+    else:
+        raise ValueError(f"Unsupported file type: {media_file}")
+
+
+def get_valid_media_files(full_path_input_dir):
     """
-    Scans a directory for valid video files and returns a list of their full paths.
+    Scans a directory for valid video and image files and returns a list of their full paths.
 
     This function checks if the specified input directory exists and scans for files 
-    with common video extensions (`.mp4`, `.avi`, `.mov`, `.mkv`, `.flv`, `.wmv`). 
-    It prints validation details and filters out non-video files.
+    with common video (`.mp4`, `.avi`, `.mov`, `.mkv`, `.flv`, `.wmv`) and image 
+    (`.jpg`, `.jpeg`, `.png`, `.gif`, `.bmp`, `.tiff`, `.webp`) extensions.
+    It prints validation details and filters out non-media files.
 
     Args:
-        full_path_input_dir (str): The absolute path to the input directory containing video files.
+        full_path_input_dir (str): The absolute path to the input directory containing media files.
 
     Returns:
-        list: A list of full paths to detected video files.
-        None: If no valid video files are found.
+        list: A list of full paths to detected media files.
+        None: If no valid media files are found.
 
     Raises:
         FileNotFoundError: If the input directory does not exist.
 
     Workflow:
         1. Checks if the input directory exists.
-        2. Iterates through all files in the directory and filters files based on valid video extensions.
-        3. Returns a list of full paths for valid video files.
+        2. Iterates through all files in the directory and filters files based on valid media extensions.
+        3. Returns a list of full paths for valid media files.
 
     Notes:
         - Only filters based on file extensions; deeper validation (e.g., corrupt files) happens later.
     """
-
+    
     # Validate files in input dir
     print(f"\n\nValidating files in {full_path_input_dir}...")
 
@@ -198,32 +258,47 @@ def get_valid_input_videos(full_path_input_dir):
     if not os.path.exists(full_path_input_dir):
         raise FileNotFoundError(f"Input directory {full_path_input_dir} not found.")
 
-    # Validate extensions, separate out video files (based on ext only - deeper validation happens later)
+    # Define valid extensions
     video_extensions = {'.mp4', '.avi', '.mov', '.mkv', '.flv', '.wmv'}
+    image_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp'}
+    gif_extension = {'.gif'}
+    valid_extensions = video_extensions | image_extensions | gif_extension
 
-    video_files = []
+    media_files = []
     all_files = os.listdir(full_path_input_dir)
     print(f"\n\nTotal input files: {len(all_files)}\n")
 
     for f in all_files:
         extension = os.path.splitext(f)[1].lower()
-        if extension in video_extensions:
-            video_file_full_path = os.path.join(full_path_input_dir, f)
-            video_files.append(video_file_full_path)
+        if extension in valid_extensions:
+            media_file_full_path = os.path.join(full_path_input_dir, f)
+            media_files.append(media_file_full_path)
         else:
-            print(f"Non-video file to be ignored: {f}")
+            print(f"Non-media file to be ignored: {f}")
 
-    if not video_files:
-        print("No video files found in the directory.")
+    if not media_files:
+        print("No media files found in the directory.")
         return
     
-    print(f"\nTotal input video files {len(video_files)} \n\nStarting processing...")
+    print(f"\nTotal input media files {len(media_files)} \n\nStarting processing...")
 
-    return video_files
-
+    return media_files
 
 def create_output_dir():
-    """"""
+    """
+    Creates the output directory for storing extracted frame images.
+
+    This function constructs the full path for the `output_frames` directory 
+    within the `output` folder at the current working directory. If the 
+    directory does not exist, it is created.
+
+    Returns:
+        str: The full path to the created output directory.
+
+    Notes:
+        - If the directory already exists, no error is raised.
+        - The function prints the directory path for confirmation.
+    """
     full_path_output_dir = os.path.join(os.getcwd(), "output", "output_frames")
     print(f"\nMaking directory {full_path_output_dir} to store frame image files")
     os.makedirs(full_path_output_dir, exist_ok=True)
@@ -278,19 +353,16 @@ def main_extract_frames(input_dir):
         full_path_input_dir = input_dir
 
     # Validate and retrieve video files
-    video_file_paths = get_valid_input_videos(full_path_input_dir)
+    media_file_paths = get_valid_media_files(full_path_input_dir)
 
     # Define and create the output directory
 
     full_path_output_dir = create_output_dir()
-    # full_path_output_dir = os.path.join(os.getcwd(), "output", "output_frames")
-    # print(f"\nMaking directory {full_path_output_dir} to store frame image files")
-    # os.makedirs(full_path_output_dir, exist_ok=True)
 
     # Run frame extraction
-    for video_file_path in video_file_paths:
-        print(f"\nExtracting frames from: {video_file_path}")
-        extract_frames(full_path_output_dir, video_file_path)
+    for media_file_path in media_file_paths:
+        print(f"\nExtracting frames from: {media_file_path}")
+        extract_frames(full_path_output_dir, media_file_path)
 
     print("\nFrame extraction complete.")
 
