@@ -59,41 +59,25 @@ def process_images_in_chunks(files, input_directory, output_directory, grid_dime
     chunk_size = grid_dimension ** 2  # NxN grid = (grid_dimension * grid_dimension) images per grid
     for i in range(0, len(files), chunk_size):
         chunk = files[i:i + chunk_size]
-        print("chunk",chunk)
         images = [Image.open(os.path.join(input_directory, file)) for file in chunk]
-        print("images", images)
 
         frame_width, frame_height = images[0].size
-        print("frame_width, frame_height", frame_width, frame_height)
         grid = create_grid(images, frame_width, frame_height, grid_dimension)
 
         first_file_in_chunk = chunk[0]
         last_file_in_chunk = chunk[-1]
-        print("first_file_in_chunk:", first_file_in_chunk)
-        print("last_file_in_chunk:", last_file_in_chunk)
         first_file_in_chunk_timestamps = extract_timestamps(first_file_in_chunk)
         last_file_in_chunk_timestamps = extract_timestamps(last_file_in_chunk)
-        
-        print("first_file_in_chunk_timestamps", first_file_in_chunk_timestamps )
-        print("last_file_in_chunk_timestamps", last_file_in_chunk_timestamps)
-
 
         start_timestamp = first_file_in_chunk_timestamps[0]
         end_timestamp = last_file_in_chunk_timestamps[-1]
-
-        print("start_timestamp",start_timestamp )
-        print("end_timestamp", end_timestamp)
 
         save_grid(grid, output_directory, start_timestamp, end_timestamp)
 
 def create_grids_from_frames(grid_dimension, input_directory, output_directory):
     """Processes frames from given input location"""
 
-    print(f"input_directory:{input_directory}")
-
     input_videos = os.listdir(input_directory)
-
-    print(f"input_videos: {input_videos}")
     for video_folder in os.listdir(input_directory):
         video_folder_path = os.path.join(input_directory, video_folder)
         if os.path.isdir(video_folder_path):  # Ensure it's a directory
