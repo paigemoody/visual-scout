@@ -11,32 +11,6 @@ from visual_scout.generate_grids import (
     create_grids_from_frames
 )
 
-class TestGenerateGrids(unittest.TestCase):
-    """Unit tests for generate_grids.."""
-
-    # def setUp(self):
-    #     """Set up paths to fixture images, temp output directory."""
-    #     self.fixture_dir = os.path.join(os.path.dirname(__file__), "fixtures", "example_output_frames")
-    #     self.output_dir = os.path.join(os.path.dirname(__file__), "tmp", "temp_grid_output")
-    #     os.makedirs(self.output_dir, exist_ok=True)
-
-    #     # Use images from fixture directory
-    #     self.video_frames_dir = os.path.join(self.fixture_dir, "example_video_horizontal_frames")
-    #     self.sample_images = sorted([
-    #         os.path.join(self.video_frames_dir, f) for f in os.listdir(self.video_frames_dir)
-    #         if f.endswith(".jpg")
-    #     ])
-
-    # def tearDown(self):
-    #     """Completely remove the /tmp directory and all its contents."""
-    #     tmp_dir = os.path.join(os.path.dirname(__file__), "tmp")
-
-    #     if os.path.exists(tmp_dir):
-    #         try:
-    #             shutil.rmtree(tmp_dir)  # Delete everything inside /tmp and remove /tmp itself
-    #             print(f"Deleted temporary test directory: {tmp_dir}")
-    #         except Exception as e:
-    #             print(f"Warning: Failed to delete {tmp_dir}: {e}")
 
 class TestGridProcessing(unittest.TestCase):
     
