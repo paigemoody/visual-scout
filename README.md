@@ -40,6 +40,21 @@ pip install -e .
 
 Note: This process is still under construction - for now there are three processes that must be run sequentially to generate output data.
 
+## Estimate Cost
+
+This is a _rough_ estimate based on napkin math of processing cost. For more details on how this works see the write up issue: https://github.com/paigemoody/visual-scout/issues/7.
+
+1. Install ffmpeg, ffprobe
+
+`brew install ffmpeg fprobe`
+
+2. Estimate cost to process all videos, gifs and images in a given input dir
+
+    To use 4o-mini (swap in 4o otherwise) model run: `visual-scout estimate-cost <path to your input dir> 4o-mini`
+
+    For example: `visual-scout estimate-cost visual_scout/example_input 4o-mini`
+
+
 ## Extract Frames 
 
 This process will extract frames from each video in the given directory. Frame images are extracted at 2 second intervals, and written to the `output_frames` directory.

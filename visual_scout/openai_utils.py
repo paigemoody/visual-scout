@@ -1,12 +1,6 @@
 from visual_scout.image_utils import encode_image_to_base64
 
-
-def get_label_gen_prompt(image_path):
-    """Generate the OpenAI prompt for image labeling."""
-    image_bytes = encode_image_to_base64(image_path)
-    image_data = {"image": image_bytes, "resize": 768}
-
-    prompt = """
+PROMPT = """
 
     Analyze the provided image grid and generate detailed labels identifying all visible objects, actions, icons, and visible text. 
     This is intended to help researchers efficiently review video content and determine which segments warrant further examination.
@@ -51,4 +45,9 @@ def get_label_gen_prompt(image_path):
     }
     """
 
-    return [{"role": "user", "content": [prompt, image_data]}]
+def get_label_gen_prompt(image_path):
+    """Generate the OpenAI prompt for image labeling."""
+    image_bytes = encode_image_to_base64(image_path)
+    image_data = {"image": image_bytes, "resize": 768}
+
+    return [{"role": "user", "content": [PROMPT, image_data]}]
