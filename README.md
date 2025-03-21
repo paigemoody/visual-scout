@@ -50,9 +50,9 @@ This is a _rough_ estimate based on napkin math of processing cost. For more det
 
 2. Estimate cost to process all videos, gifs and images in a given input dir
 
-    To use 4o-mini (swap in 4o otherwise) model run: `visual-scout estimate-cost <path to your input dir> 4o-mini`
+    Run: `visual-scout estimate-cost <path to your input dir>`
 
-    For example: `visual-scout estimate-cost visual_scout/example_input 4o-mini`
+    For example: `visual-scout estimate-cost visual_scout/example_input`
 
 
 ## Extract Frames 

@@ -11,8 +11,7 @@ def main():
     # Estimate Processing Cost
     parser_cost = subparsers.add_parser("estimate-cost", help="Estimate processing cost for video/images in a directory")
     parser_cost.add_argument("input_dir", type=str, help="Path to the directory containing videos/images")
-    parser_cost.add_argument("open_ai_model", type=str, choices=["4o", "4o-mini"], help="OpenAI model to use for estimation")
-    parser_cost.set_defaults(func=lambda args: estimate_processing_cost(args.input_dir, args.open_ai_model))
+    parser_cost.set_defaults(func=lambda args: estimate_processing_cost(args.input_dir))
 
     # Extract Frames
     parser_extract = subparsers.add_parser("extract-frames", help="Extract frames for all files within input directory")
