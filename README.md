@@ -19,7 +19,7 @@ source venv/bin/activate
 3. Install initial dependencies. Since opencv-python needs cmake and scikit-build we'll install them first:
 
 ```
-pip3 install cmake scikit-build
+pip install cmake scikit-build
 ```
 
 4. Now install the rest:

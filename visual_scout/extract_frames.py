@@ -209,6 +209,8 @@ def extract_frames(output_frames_base_path, media_file):
             # May cause errors if there are more than 99 frames in a gif...
             if frame_index <= 9:
                 frame_index_formatted = f"0{str(frame_index)}"
+            else:
+                frame_index_formatted = str(frame_index)
     
             frame_filename = f"frame_00-00-{frame_index_formatted}_00-00-{frame_index_formatted}.jpg"
             frame_path = os.path.join(output_frames_media_path, frame_filename)
