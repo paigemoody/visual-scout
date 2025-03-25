@@ -2,10 +2,16 @@ import argparse
 from visual_scout.extract_frames import main_extract_frames
 from visual_scout.extract_labels import get_labels_main
 from visual_scout.generate_grids import main_generate_grids
+from visual_scout.estimate_processing_cost import estimate_processing_cost
 
 def main():
     parser = argparse.ArgumentParser(prog="visual-scout", description="Visual Scout CLI for processing video and images.")
     subparsers = parser.add_subparsers(dest="command", help="Subcommands")
+
+    # Estimate Processing Cost
+    parser_cost = subparsers.add_parser("estimate-cost", help="Estimate processing cost for video/images in a directory")
+    parser_cost.add_argument("input_dir", type=str, help="Path to the directory containing videos/images")
+    parser_cost.set_defaults(func=lambda args: estimate_processing_cost(args.input_dir))
 
     # Extract Frames
     parser_extract = subparsers.add_parser("extract-frames", help="Extract frames for all files within input directory")

@@ -59,6 +59,12 @@ def get_openai_labels(prompt, open_ai_key, open_ai_model):
                 return {"labels": [f"Warning: OpenAI refused processing: {refusal}"]}
 
             content = response_json["choices"][0]["message"]["content"]
+
+            token_data = response.usage
+            input_tokens = token_data.prompt_tokens
+            output_tokens = token_data.completion_tokens
+            print(f"input_tokens: \n{input_tokens}")
+            print(f"output_tokens: \n{output_tokens}")
             return json.loads(content)
 
         except Exception as e:
@@ -93,6 +99,7 @@ def process_images(input_dir, output_dir, open_ai_key, open_ai_model):
                 continue  # Skip non-image files
 
             image_path = os.path.join(root, file)
+            print(f"\n\nimage_path: {image_path}")
             timestamps = extract_timestamps(file)
 
             if not timestamps:

@@ -9,8 +9,8 @@ def read_requirements():
 setup(
     name="visual-scout",
     version="0.1.0",
-    # packages=find_packages(),
-    install_requires=read_requirements(),  # Load requirements from file
+    packages=find_packages(),
+    # install_requires=read_requirements(),  # Load requirements from file
     entry_points={
         "console_scripts": [
             "visual-scout=visual_scout.cli:main",

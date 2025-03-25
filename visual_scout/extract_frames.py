@@ -198,30 +198,36 @@ def extract_frames(output_frames_base_path, media_file):
         return
     
     elif extension == gif_extension:
-        # TODO - rn this gets all frames from GIFs - overkill - make it smarter
+        # TODO - rn this gets every other frame from GIFs - overkill - make it smarter
         # Handle animated GIF case - in the Pillow (PIL) package, a GIF is considered an image
         print(f"\n\nExtracting frames from animated GIF: {media_file}...")
         gif = open_gif(media_file)
         frame_index = 0
 
         while True:
+            print("\n\nframe_index: {frame_index}")
             # awkward here... trying to force format timestamp format.
             # May cause errors if there are more than 99 frames in a gif...
             if frame_index <= 9:
                 frame_index_formatted = f"0{str(frame_index)}"
-    
-            frame_filename = f"frame_00-00-{frame_index_formatted}_00-00-{frame_index_formatted}.jpg"
-            frame_path = os.path.join(output_frames_media_path, frame_filename)
-            gif.seek(frame_index)
-            gif.convert("RGB").save(frame_path)
-            print(f"Saved: {frame_path}")
+            else:
+                frame_index_formatted = str(frame_index)
+            
+            # only process first then everyother frame
+            is_even_or_zero = frame_index % 2 == 0
+            if is_even_or_zero:
+                print("PROCESSING {} since is_even_or_zero...")
+                frame_filename = f"frame_00-00-{frame_index_formatted}_00-00-{frame_index_formatted}.jpg"
+                frame_path = os.path.join(output_frames_media_path, frame_filename)
+                gif.seek(frame_index)
+                gif.convert("RGB").save(frame_path)
+                print(f"Saved: {frame_path}")
             frame_index += 1
 
             try:
                 gif.seek(frame_index)
             except EOFError:
                 break
-        
         return
     else:
         raise ValueError(f"Unsupported file type: {media_file}")

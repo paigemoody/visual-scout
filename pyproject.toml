@@ -12,7 +12,6 @@ requires-python = ">=3.8"
 license = { text = "MIT" }
 dependencies = [
     "numpy",
-    "setuptools",
     "dotenv",
     "numpy==1.24.4",
     "opencv-python==4.10.0.84",
@@ -32,10 +31,9 @@ dev = [
 [project.scripts]
 visual-scout = "visual_scout.cli:main"
 
-
 [tool.setuptools.packages.find]
-include = ["visual*"]
-where = ["visual_scout"]
+include = ["visual_scout*"]
+where = ["."]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
