@@ -133,27 +133,32 @@ def estimate_processing_cost(input_dir):
     print(f"\n\nCalculating processing cost for files in {input_dir}:")
 
     # Videos
+    total_valid_videos = len(video_filepaths) - len(invalid_filepaths["video"])
     print(f"""
     Videos
-    - Total valid input videos: {len(video_filepaths) - len(invalid_filepaths["video"])}
-    - Total duration of input videos: {total_video_duration} seconds
+    - Total valid input videos: {total_valid_videos}
+    - Total duration of input videos: {round(total_video_duration,1)} seconds ( {round(total_video_duration/60,2)} minutes, {round(total_video_duration/3600, 2)} hours)
     - Total video frames to be processed: {total_video_frames_to_process}
     - Total video frame 3x3 grids to be processed: {total_video_grids}
     """)
 
     # Gifs
+    total_valid_gifs = len(gif_filepaths) - len(invalid_filepaths["gif"])
     print(f"""
     GIFs
-    - Total valid input gifs: {len(gif_filepaths) - len(invalid_filepaths["gif"])}
+    - Total valid input gifs: {total_valid_gifs}
     - Total gif frames to be processed: {total_gif_frames_to_process}
     - Total gif frame 3x3 grids to be processed: {total_gif_grids}
     """)
 
     # Images
+    total_valid_images = len(image_filepaths) - len(invalid_filepaths["image"])
     print(f"""
     Images
-    - Total input stand-alone images to be procssed: {len(image_filepaths) - len(invalid_filepaths["image"])}
+    - Total input stand-alone images to be procssed: {total_valid_images}
     """)
+
+    total_valid_input_files = total_valid_videos + total_valid_gifs + total_valid_images
 
     print(f"""
     ⚠️ Invalid input files (skipped for estimation, cannot be processed): 
@@ -181,7 +186,9 @@ def estimate_processing_cost(input_dir):
 
 *********************************""")
     
-    print(f"\n\nEstimated processing cost for your {len(all_files)} valid input file(s):")
+    print(f"\n\nEstimated processing cost for your {total_valid_input_files} valid input file(s):")
     print(f"\n  - Using GPT 4o: ${total_cost_4o}\n")
     print(f"  - Using GPT 4o-mini: ${total_cost_4o_mini}\n")
+
+    return total_cost_4o, total_cost_4o_mini
 
