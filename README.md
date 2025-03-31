@@ -37,7 +37,7 @@ sudo apt install ffmpeg
 
 _Note:_ pipx is a tool for installing and running Python applications in isolated environments. It ensures that each CLI tool has its own clean environment, separate from your global Python packages. Once installed with pipx, you can run the CLI from anywhere on your computer, just like a native system command.
 
-1. Make sure you have `pipx` installed.
+1. **Make sure you have `pipx` installed.**
 
     - Option 1: Basic install:
 
@@ -60,14 +60,9 @@ pipx ensurepath
 ```
 
 
+2. **Open a new terminal window to ensure the changes take effect.**
 
-```
-
-```
-
-2. Open a new terminal windwo to ensure the changes take effect.
-
-3. Install `visual-scout` using pipx:
+3. **Install `visual-scout` using pipx:**
 
     - This command will:
         - Clone the Visual Scout repository from GitHub
@@ -88,7 +83,7 @@ pipx install git+https://github.com/paigemoody/visual-scout.git
 
 _Note: Eventually, Visual Scout will be published to PyPI._
 
-5. Verify installation
+5. **Verify installation**
 
 ```
 visual-scout --help
