@@ -116,7 +116,7 @@ This process will extract frames from each video in the given directory. Frame i
 
 2. Extract frames
 
-```visual-scout extract-frames <your directory path>```
+```~/Downloads/bellingcat_test_videos/1xbet_2 <your directory path>```
 
 To use example videos run: 
 
@@ -132,13 +132,13 @@ Note: you may want to play around with grid size to figure out the ideal level o
 
     To use default grid size run: 
     
-    ```visual-scout generate-grids`
+    ```visual-scout generate-grids```
 
     To use a different grid size run: 
     
-    ```visual-scout generate-grids --grid-size <grid size intger>` 
+    ```visual-scout generate-grids --grid-size <grid size intger>```
 
-    For example: ```visual-scout generate-grids --grid-size <grid size intger>`
+    For example: ```visual-scout generate-grids --grid-size <grid size intger>```
 
 ## Extract Visual Content
 
