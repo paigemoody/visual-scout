@@ -167,11 +167,11 @@ This is where you will use an AI model (just OpenAI is available for now) to ext
 visual-scout generate-labels --open-ai-key=$OPENAI_KEY
 ``` 
 
-    - Add optional additional arg `--open-ai-model` if you want to specify a model. The default is `gpt-4o-mini`
-    - This will send the grids produced in the previous step to OpenAI along with a prompt which asks it to return a json object containing everything it sees in the video. 
-    - The output is:
-        - An individual json file containing the visual elements for one individual grid file, and 
-        - One large json file that combines all the individual json files into one, associating each group of elements to their corresponding timestamp. 
+- Add optional additional arg `--open-ai-model` if you want to specify a model. The default is `gpt-4o-mini`
+- This will send the grids produced in the previous step to OpenAI along with a prompt which asks it to return a json object containing everything it sees in the video. 
+- The output is:
+    - An individual json file containing the visual elements for one individual grid file, and 
+    - One large json file that combines all the individual json files into one, associating each group of elements to their corresponding timestamp. 
 
 
 ## Development Setup
