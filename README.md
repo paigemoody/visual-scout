@@ -39,46 +39,48 @@ _Note:_ pipx is a tool for installing and running Python applications in isolate
 
 1. Make sure you have `pipx` installed.
 
-- Option 1: Basic install:
+    - Option 1: Basic install:
 
 ```
 python3 -m pip install --user pipx
-```
 
-Confirm install and add the installed scripts to your shell's PATH:
+# Confirm install and add the installed scripts to your shell's PATH:
 
-```
 python3 -m pipx ensurepath
 ```
 
-- Option 2: Install with Homebrew: 
+    -  Option 2: Install with Homebrew: 
 
 ```
 brew install pipx
-```
 
-Confirm install and add the installed scripts to your shell's PATH:
+# Confirm install and add the installed scripts to your shell's PATH:
 
-```
 pipx ensurepath
+```
+
+
+
+```
+
 ```
 
 2. Open a new terminal windwo to ensure the changes take effect.
 
 3. Install `visual-scout` using pipx:
 
-- This command will:
-    - Clone the Visual Scout repository from GitHub
-    - Install it into an isolated virtual environment
-    - Make the visual-scout command available globally on your system
+    - This command will:
+        - Clone the Visual Scout repository from GitHub
+        - Install it into an isolated virtual environment
+        - Make the visual-scout command available globally on your system
 
-Option 1: Basic install
+    - Option 1: Basic install
 
 ```
 python3 -m pipx install git+https://github.com/paigemoody/visual-scout.git
 ```
 
-Option 2: Use Homebrew
+    - Option 2: Use Homebrew
 
 ```
 pipx install git+https://github.com/paigemoody/visual-scout.git
