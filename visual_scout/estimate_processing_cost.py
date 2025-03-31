@@ -36,7 +36,7 @@ def get_video_duration(video_path):
         duration = float(result.stdout.strip(video_path))
         return duration
     except Exception as e:
-        print(f"\tInvalid video {video_path} cannot be processed -- will be skipped")
+        print(f"\t⚠️ Invalid video {video_path} cannot be processed -- will be skipped")
         return 0.0
 
 
@@ -79,12 +79,12 @@ def estimate_processing_cost(input_dir):
             gif_filepaths.append(file_full_path)
         else:
             invalid_filepaths["other"].append(file)
-            print(f"\n\tUnsupported file type: '{file_extension}' found for {file_full_path} -- will be skipped")
+            print(f"\n\t⚠️ Unsupported file type: '{file_extension}' found for {file_full_path} -- will be skipped")
     
 
     # videos
     if len(video_filepaths) > 0:
-        print(f"\n\nCalculating total duration of {len(video_filepaths)} input videos...\n")
+        print(f"\n\nCalculating total duration of {len(video_filepaths)} input video(s)...\n")
     total_video_duration = 0
     for file in video_filepaths:
         duration = get_video_duration(file)
@@ -99,7 +99,7 @@ def estimate_processing_cost(input_dir):
     
     # gifs
     if len(gif_filepaths) > 0:
-        print(f"\n\nCalculating total frame count of {len(gif_filepaths)} input gifs...")
+        print(f"\n\nCalculating total frame count of {len(gif_filepaths)} input gif(s)...")
     total_gif_frames = 0
     for file in gif_filepaths:
         frame_count = count_gif_frames(file)
@@ -120,7 +120,7 @@ def estimate_processing_cost(input_dir):
     total_image_files_to_process = total_grids_to_process + len(image_filepaths)
 
     if total_image_files_to_process < 1:
-        print(f"\nNo valid input files found in {input_dir}; this dataset will not be able to be processed.")
+        print(f"\n⚠️ No valid input files found in {input_dir}; this dataset will not be able to be processed.")
         return
 
     # Display summary:
@@ -150,7 +150,7 @@ def estimate_processing_cost(input_dir):
     """)
 
     print(f"""
-    Invalid input files (skipped for estimation, cannot be processed): 
+    ⚠️ Invalid input files (skipped for estimation, cannot be processed): 
     
     - Videos ({len(invalid_filepaths["video"])}): {invalid_filepaths["video"]}
     - Gifs ({len(invalid_filepaths["gif"])}): {invalid_filepaths["gif"]}
@@ -160,6 +160,7 @@ def estimate_processing_cost(input_dir):
 
     # Based on openAI pricing as of 3-21-2025, prompt as of 3-21-2025 and average image size - details in: 
     # https://github.com/paigemoody/visual-scout/issues/7#issuecomment-2724828185
+    # TODO - make this dynamic
     cost_per_image_4o = 0.005
     cost_per_image_4o_mini = 0.0003
 
@@ -176,7 +177,7 @@ def estimate_processing_cost(input_dir):
         
 - Always be sure to validate cost esimates before processing large amounts of input data.
         
-- For a details on  estimation methodology see: https://github.com/paigemoody/visual-scout/issues/7#issuecomment-2724763408
+- For a details on estimation methodology see: https://github.com/paigemoody/visual-scout/issues/7#issuecomment-2724763408
 
 *********************************""")
     

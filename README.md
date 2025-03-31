@@ -103,7 +103,13 @@ source venv/bin/activate
 3. Install visual scout in editable mode
 
 ```
-pip install -e .
+pipx install -e .
+```
+
+4. Confirm installation
+
+```
+visual-scout --help
 ```
 
 # Process Video
