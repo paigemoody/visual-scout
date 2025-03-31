@@ -10,12 +10,12 @@ COST_PER_MILLION_TOKENS_4o_mini_OUTPUT = 0.600
 
 # ------ Token count estimates ------ #
 
-# -- Based on rough estimates for input and output tokens:
+# --- Based on rough estimates for input and output tokens:
 # ~415 tokens in base promt
 # ~1215 tokens in grid content
 # ~35 output labels per grid -> ~300 tokens
 # details in: https://github.com/paigemoody/visual-scout/issues/7#issuecomment-2724828185
-# --
+# ---
 EST_INPUT_TOKEN_COUNT_PER_REQUEST = 1700
 EST_OUTPUT_TOKEN_COUNT_PER_REQUEST = 300
 
