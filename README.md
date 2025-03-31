@@ -101,6 +101,7 @@ This is a _rough_ estimate based on napkin math of processing cost. For more det
     visual-scout estimate-cost <path to your input dir>
     ```
 
+
     To use example files run: 
     ```
     visual-scout estimate-cost visual_scout/example_input
