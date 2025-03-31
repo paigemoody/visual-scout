@@ -11,7 +11,6 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "MIT" }
 dependencies = [
-    "numpy",
     "dotenv",
     "numpy==1.24.4",
     "opencv-python==4.10.0.84",
