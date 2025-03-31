@@ -114,11 +114,7 @@ Note: This process is still under construction - for now there are four processe
 
 This is a _rough_ estimate based on napkin math of processing cost. For more details on how this works see the write up issue: https://github.com/paigemoody/visual-scout/issues/7.
 
-1. Install ffmpeg, ffprobe
-
-`brew install ffmpeg fprobe`
-
-2. Estimate cost to process all videos, gifs and images in a given input dir
+1. Estimate cost to process all videos, gifs and images in a given input dir
 
     Run: `visual-scout estimate-cost <path to your input dir>`
 
