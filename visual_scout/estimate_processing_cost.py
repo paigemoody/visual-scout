@@ -2,6 +2,7 @@ import subprocess
 import os
 import math 
 from PIL import Image
+from visual_scout.constants import COST_PER_REQUEST_4o, COST_PER_REQUEST_4o_mini
 
 def count_gif_frames(gif_path):
     """
@@ -21,6 +22,11 @@ def count_gif_frames(gif_path):
         print(f"\tError processing {gif_path}: {e} -- will be skipped")
         return 0
 
+def get_list_filenames_from_filepaths(filepaths_list):
+    filenames_list = [file.split("/")[-1] for file in filepaths_list]
+    if filenames_list:
+        return filenames_list
+    return ""
 
 def get_video_duration(video_path):
     """Extract the duration of a video file using ffprobe."""
@@ -78,7 +84,7 @@ def estimate_processing_cost(input_dir):
         elif file_extension in gif_file_exts:
             gif_filepaths.append(file_full_path)
         else:
-            invalid_filepaths["other"].append(file)
+            invalid_filepaths["other"].append(file_full_path)
             print(f"\n\t⚠️ Unsupported file type: '{file_extension}' found for {file_full_path} -- will be skipped")
     
 
@@ -152,20 +158,14 @@ def estimate_processing_cost(input_dir):
     print(f"""
     ⚠️ Invalid input files (skipped for estimation, cannot be processed): 
     
-    - Videos ({len(invalid_filepaths["video"])}): {invalid_filepaths["video"]}
-    - Gifs ({len(invalid_filepaths["gif"])}): {invalid_filepaths["gif"]}
-    - Images ({len(invalid_filepaths["image"])}): {invalid_filepaths["image"]}
-    - Unsupported file type(s) ({len(invalid_filepaths["other"])}): {invalid_filepaths["other"]}
+    - Videos ({len(invalid_filepaths["video"])}): {get_list_filenames_from_filepaths(invalid_filepaths["video"])}
+    - Gifs ({len(invalid_filepaths["gif"])}): {get_list_filenames_from_filepaths(invalid_filepaths["gif"])}
+    - Images ({len(invalid_filepaths["image"])}): {get_list_filenames_from_filepaths(invalid_filepaths["image"])}
+    - Unsupported file type(s) ({len(invalid_filepaths["other"])}): {get_list_filenames_from_filepaths(invalid_filepaths["other"])}
     """)
 
-    # Based on openAI pricing as of 3-21-2025, prompt as of 3-21-2025 and average image size - details in: 
-    # https://github.com/paigemoody/visual-scout/issues/7#issuecomment-2724828185
-    # TODO - make this dynamic
-    cost_per_image_4o = 0.005
-    cost_per_image_4o_mini = 0.0003
-
-    total_cost_4o = total_image_files_to_process * cost_per_image_4o
-    total_cost_4o_mini = total_image_files_to_process * cost_per_image_4o_mini
+    total_cost_4o = total_image_files_to_process * COST_PER_REQUEST_4o
+    total_cost_4o_mini = total_image_files_to_process * COST_PER_REQUEST_4o_mini
     
     # Output results
     print(

@@ -154,13 +154,12 @@ This is where you will use an AI model (just OpenAI is available for now) to ext
 
     - [Create an OpenAI account](https://auth.openai.com/authorize?audience=https%3A%2F%2Fapi.openai.com%2Fv1&auth0Client=eyJuYW1lIjoiYXV0aDAtc3BhLWpzIiwidmVyc2lvbiI6IjEuMjEuMCJ9&client_id=DRivsnm2Mu42T3KOpqdtwB3NYviHYzwD&device_id=f2886c79-14d0-49c3-8362-82b93d29b456&ext-login-allow-phone=true&ext-use-new-phone-ui=true&issuer=https%3A%2F%2Fauth.openai.com&max_age=0&nonce=cVdJRWJfTzlSSkp0MU8yRTFPRU8xR0FnVWJlRVZzNlRBTGFORGNicXZXSQ%3D%3D&redirect_uri=https%3A%2F%2Fplatform.openai.com%2Fauth%2Fcallback&response_mode=query&response_type=code&scope=openid+profile+email+offline_access&screen_hint=signup&state=QUoxbTZOcHFxdFJ6LkZNX3dvOEtDQ2VyZ3JNbS5iUHYxN2dsdnFYQ21hQQ%3D%3D&flow=treatment) 
     - [Generate a new API key](https://platform.openai.com/api-keys)
-    - Save API key in your `.env` file as your `OPENAI_KEY` 
+    - Add API key to your environment as `OPENAI_KEY`: `export OPENAI_KEY=<your new key>
 
-3. Determine [which model](https://platform.openai.com/docs/models) you want to use and update your .env to reflect your choice. 
+3. [OPTIONAL] Determine [which model](https://platform.openai.com/docs/models) you want to use. 
 
-    - I'd reccomend starting with `gpt-4o-mini` because it works reasonably well and is significantly cheaper (especially important if you'll be processing a lot of videos!). 
-    - Save model choice in your `.env` file as `OPENAI_MODEL` 
-    - Add env to your session by running `source .env` 
+    - I'd reccomend starting with `gpt-4o-mini` because it works reasonably well and is significantly cheaper (especially important if you'll be processing a lot of videos!). This is the default model used.
+    - Add model choice key to your environment as `OPENAI_MODEL`: `export OPENAI_MODEL=<your model choice>
 
 4. Extract visual content using the CLI by running: 
 
