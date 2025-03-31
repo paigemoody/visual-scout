@@ -10,7 +10,7 @@ def main():
 
     # Estimate Processing Cost
     parser_cost = subparsers.add_parser("estimate-cost", help="Estimate processing cost for video/images in a directory")
-    parser_cost.add_argument("input_dir", type=str, help="Path to the directory containing videos/images")
+    parser_cost.add_argument("input_dir", type=str, help="Path to the directory containing videos/images  (eg visual_scout/example_input)")
     parser_cost.set_defaults(func=lambda args: estimate_processing_cost(args.input_dir))
 
     # Extract Frames

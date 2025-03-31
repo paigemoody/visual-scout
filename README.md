@@ -100,39 +100,27 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
-3. Install initial dependencies. Since opencv-python needs cmake and scikit-build we'll install them first:
+3. Install visual scout in editable mode
 
 ```
-pip install cmake scikit-build
+pipx install -e .
 ```
 
-4. Now install the rest:
+4. Confirm installation
 
 ```
-pip install -r requirements.txt
-```
-
-5. Install visual scout in editable mode
-
-- Note: This installs visual_scout itself, the previous steps install third-party packages visual_scout depends on.
-
-```
-pip install -e .
+visual-scout --help
 ```
 
 # Process Video
 
-Note: This process is still under construction - for now there are three processes that must be run sequentially to generate output data.
+Note: This process is still under construction - for now there are four processes that must be run sequentially to generate output data.
 
 ## Estimate Cost
 
 This is a _rough_ estimate based on napkin math of processing cost. For more details on how this works see the write up issue: https://github.com/paigemoody/visual-scout/issues/7.
 
-1. Install ffmpeg, ffprobe
-
-`brew install ffmpeg fprobe`
-
-2. Estimate cost to process all videos, gifs and images in a given input dir
+1. Estimate cost to process all videos, gifs and images in a given input dir
 
     Run: `visual-scout estimate-cost <path to your input dir>`
 
