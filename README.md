@@ -2,6 +2,90 @@
 
 A work-in-progress tool for extracting visual elements (objects and text) from a set of videos, using OpenAI.
 
+## Requirements
+
+Before installing `visual-scout`, ensure your system has:
+
+### 1. **python 3.8 or higher**
+
+- To check this run the following and ensure a valid python version is shown: 
+
+```
+python3 --version
+```
+
+### 2. **FFmpeg and FFprobe**: 
+
+- These command-line tools are required for:
+    - Extracting frames from videos (ffmpeg)
+    - Inspecting video metadata like duration (ffprobe)
+
+- Install on MacOS (using Homebrew):
+
+```
+brew install ffmpeg
+```
+
+- Or, Install on Ubuntu/Debian:
+
+```
+sudo apt update
+sudo apt install ffmpeg
+```
+
+## Install with `pipx` (recommended)
+
+_Note:_ pipx is a tool for installing and running Python applications in isolated environments. It ensures that each CLI tool has its own clean environment, separate from your global Python packages. Once installed with pipx, you can run the CLI from anywhere on your computer, just like a native system command.
+
+### 1. **Make sure you have `pipx` installed.**
+
+#### Option 1 - Basic install:
+
+```
+python3 -m pip install --user pipx
+
+# Confirm install and add the installed scripts to your shell's PATH:
+python3 -m pipx ensurepath
+```
+
+#### Option 2 - Install with Homebrew:
+
+```
+brew install pipx
+
+# Confirm install and add the installed scripts to your shell's PATH:
+pipx ensurepath
+```
+
+### 2. **Open a new terminal window to ensure the changes take effect.**
+
+### 3. **Install `visual-scout` using pipx:**
+
+- This command will:
+    - Clone the Visual Scout repository from GitHub
+    -  Install it into an isolated virtual environment
+    - Make the visual-scout command available globally on your system
+
+#### Option 1 - Basic install
+
+```
+python3 -m pipx install git+https://github.com/paigemoody/visual-scout.git
+```
+
+#### Option 2 - Use Homebrew
+
+```
+pipx install git+https://github.com/paigemoody/visual-scout.git
+```
+
+_Note: Eventually, Visual Scout will be published to PyPI._
+
+### 4. **Verify installation**
+
+```
+visual-scout --help
+```
+
 ## Development Setup
 
 1. Create virtual environment
