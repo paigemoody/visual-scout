@@ -4,6 +4,8 @@ from datetime import timedelta
 import warnings
 import shutil
 from PIL import Image, UnidentifiedImageError
+from visual_scout.frame_utils import get_frame_similarity_ssim
+from visual_scout.constants import SSIM_THRESHOLD, SAMPLING_INTERVAL
 
 
 def open_video(video_full_path):
@@ -113,15 +115,15 @@ def extract_frames_from_video(output_frames_media_path, media_file):
         print(f"Total Frames: {frame_count}")
         print(f"Video Duration: {timedelta(seconds=duration)}")
 
-        sampling_interval = 2  # Extract a frame every 2 seconds
+        sampling_interval = SAMPLING_INTERVAL  # Extract a frame every 2 seconds
         frame_interval = round(fps * sampling_interval)  # Force rounding to nearest integer frame count
 
         print(f"Extracting every frames at {sampling_interval} seconds interval")
-        
         frame_index = 0
-
+        # (frame_path, frame)
+        most_recently_saved_frame = (None, None)
         while frame_index < frame_count:
-            # print(f"Processing frame {frame_index} / {frame_count}")
+            print(f"\n\nProcessing frame {frame_index} / {frame_count}")
             cap.set(cv2.CAP_PROP_POS_FRAMES, min(frame_index, frame_count - 1))
             ret, frame = cap.read()
             
@@ -135,12 +137,19 @@ def extract_frames_from_video(output_frames_media_path, media_file):
 
             frame_filename = f"frame_{start_time.replace(':', '-')}_{end_time.replace(':', '-')}.jpg"
             frame_path = os.path.join(output_frames_media_path, frame_filename)
+
+            new_frame_similar_to_previous_frame = get_frame_similarity_ssim(most_recently_saved_frame[1], frame, SSIM_THRESHOLD)
             
-            if cv2.imwrite(frame_path, frame):
-                print(f"Saved: {frame_path}")
-                saved_frames += 1
+            if most_recently_saved_frame is None or not new_frame_similar_to_previous_frame:
+                if cv2.imwrite(frame_path, frame):
+                    print(f"Saved: {frame_path}")
+                    saved_frames += 1
+                    most_recently_saved_frame = (frame_path, frame)
+                else:
+                    warnings.warn(f"Error saving: {frame_filename}")
+            
             else:
-                warnings.warn(f"Error saving: {frame_filename}")
+                print(f"\nSKIPPING {frame_path}")
 
             frame_index += frame_interval
             if frame_index >= frame_count:
@@ -173,7 +182,7 @@ def extract_frames_from_gif(output_frames_media_path, media_file):
             frame_index_formatted = str(frame_index)
         
         # only process first then everyother frame
-        is_even_or_zero = frame_index % 2 == 0
+        is_even_or_zero = frame_index % SAMPLING_INTERVAL == 0
         if is_even_or_zero:
             frame_filename = f"frame_00-00-{frame_index_formatted}_00-00-{frame_index_formatted}.jpg"
             frame_path = os.path.join(output_frames_media_path, frame_filename)
