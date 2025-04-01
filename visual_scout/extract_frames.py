@@ -75,6 +75,32 @@ def open_gif(gif_full_path):
         return None
 
 
+def get_file_type_from_extension(media_file):
+    # Determine if input is a video, animated GIF, or static image
+    video_extensions = {'.mp4', '.avi', '.mov', '.mkv', '.flv', '.wmv'}
+    image_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.webp'}
+    gif_extensions = {'.gif'}
+    extension = os.path.splitext(media_file)[1].lower()
+
+    if extension in video_extensions:
+        return "video"
+    elif extension in image_extensions:
+        return "image"
+    elif extension in gif_extensions:
+        return "gif"  
+    else:
+        raise ValueError(f"Unsupported file type: {media_file}")
+
+
+def extract_frames_from_image(output_frames_media_path, media_file):
+    # Handle static image case
+    frame_filename = "frame_0-00-00_0-00-00.jpg"
+    frame_path = os.path.join(output_frames_media_path, frame_filename)
+    shutil.copy(media_file, frame_path)
+    print(f"Saved image as frame: {frame_path}")
+    return frame_path
+
+
 def extract_frames(output_frames_base_path, media_file):
     """
     Extracts frames from a video, animated GIF, or processes a single image file.
@@ -125,21 +151,13 @@ def extract_frames(output_frames_base_path, media_file):
     output_frames_media_path = os.path.join(output_frames_base_path, f"{name_without_ext}__frames")
     os.makedirs(output_frames_media_path, exist_ok=True)
     
-    # Determine if input is a video, animated GIF, or static image
-    video_extensions = {'.mp4', '.avi', '.mov', '.mkv', '.flv', '.wmv'}
-    image_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.webp'}
-    gif_extension = '.gif'
-    extension = os.path.splitext(media_file)[1].lower()
+    file_type = get_file_type_from_extension(media_file)
     
-    if extension in image_extensions:
-        # Handle static image case
-        frame_filename = "frame_0-00-00_0-00-00.jpg"
-        frame_path = os.path.join(output_frames_media_path, frame_filename)
-        shutil.copy(media_file, frame_path)
-        print(f"Saved image as frame: {frame_path}")
-        return
+    if file_type == "image":
+        output_frames_paths = extract_frames_from_image(output_frames_media_path, media_file)
+        return output_frames_paths
     
-    elif extension in video_extensions:
+    elif file_type == "video":
         # Handle video case
         print(f"\n\nExtracting frames from {media_file}...")
         saved_frames = 0
@@ -197,7 +215,7 @@ def extract_frames(output_frames_base_path, media_file):
             print(f"Frames saved: {saved_frames} in {output_frames_media_path}")
         return
     
-    elif extension == gif_extension:
+    elif file_type == "gif":
         # TODO - rn this gets every other frame from GIFs - overkill - make it smarter
         # Handle animated GIF case - in the Pillow (PIL) package, a GIF is considered an image
         print(f"\n\nExtracting frames from animated GIF: {media_file}...")
@@ -229,8 +247,6 @@ def extract_frames(output_frames_base_path, media_file):
             except EOFError:
                 break
         return
-    else:
-        raise ValueError(f"Unsupported file type: {media_file}")
 
 
 def get_valid_media_files(full_path_input_dir):
