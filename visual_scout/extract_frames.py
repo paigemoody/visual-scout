@@ -1,5 +1,6 @@
 import cv2
 import os
+import numpy as np
 from datetime import timedelta
 import warnings
 import shutil
@@ -165,38 +166,74 @@ def extract_frames_from_video(output_frames_media_path, media_file):
         print(f"Frames saved: {saved_frames} in {output_frames_media_path}")
     return saved_frames
 
+
 def extract_frames_from_gif(output_frames_media_path, media_file):
-    # TODO - rn this gets every other frame from GIFs - overkill - make it smarter
-    # Handle animated GIF case - in the Pillow (PIL) package, a GIF is considered an image
+    """
+    Extracts every nth frame (based on SAMPLING_INTERVAL) from an animated GIF 
+    and saves them as JPEG images with timestamp-style filenames.
+
+    Args:
+        output_frames_media_path (str): Directory path to save extracted frames.
+        media_file (str): Path to the input GIF file.
+
+    Returns:
+        int: The number of frames saved.
+    """
+    # TODO - Right now this grabs every other frame (based on SAMPLING_INTERVAL).
+    # This is probably overkill — consider making it smarter based on actual frame content.
+    
     print(f"\n\nExtracting frames from animated GIF: {media_file}...")
+    
+    # Open the GIF using a helper function that returns a PIL Image object
     gif = open_gif(media_file)
-    frame_index = 0
-    frames_saved = 0
+    
+    frame_index = 0        # Keeps track of current frame position
+    frames_saved = 0       # Counter for how many frames are actually saved
+    most_recently_saved_frame = (None, None)
 
     while True:
-        # awkward here... trying to force format timestamp format.
-        # May cause errors if there are more than 99 frames in a gif...
+        try:
+            # Seek to the correct frame and convert to RGB before saving as JPEG
+            gif.seek(frame_index)
+        except EOFError:
+            # No more frames to read — break out of loop
+            break
+
+        # Format the frame index into a timestamp-style string like "00-00-03"
+        # Note: This assumes fewer than 100 frames for consistent filename format
         if frame_index <= 9:
             frame_index_formatted = f"0{str(frame_index)}"
         else:
             frame_index_formatted = str(frame_index)
         
-        # only process first then everyother frame
+        frame_filename = f"frame_00-00-{frame_index_formatted}_00-00-{frame_index_formatted}.jpg"
+        frame_path = os.path.join(output_frames_media_path, frame_filename)
+        
+        # Evaluate frame similarity only if it's the first frame or an nth frame
         is_even_or_zero = frame_index % SAMPLING_INTERVAL == 0
         if is_even_or_zero:
-            frame_filename = f"frame_00-00-{frame_index_formatted}_00-00-{frame_index_formatted}.jpg"
-            frame_path = os.path.join(output_frames_media_path, frame_filename)
-            gif.seek(frame_index)
-            gif.convert("RGB").save(frame_path)
-            frames_saved += 1
-            print(f"Saved: {frame_path}")
+            """Note: GIF frames are usually stored in P (palette-based) mode — 
+            a limited 256-color indexed format used for small file sizes. 
+            jpeg does not support P mode — it requires images to be in RGB or grayscale."""
+            current_frame_image = gif.convert("RGB")
+            current_frame_array = np.array(current_frame_image)
+            # Compare to previous saved frame
+            is_similar = get_frame_similarity_ssim(
+                most_recently_saved_frame[1], current_frame_array, SSIM_THRESHOLD
+            )
+            if not is_similar:
+                current_frame_image.save(frame_path)
+                most_recently_saved_frame = (frame_path, current_frame_array)
+                frames_saved += 1
+                print(f"Saved: {frame_path}")
+            else:
+                print(f"\nSKIPPING {frame_path}")
+        
+        # always increment frame index
         frame_index += 1
 
-        try:
-            gif.seek(frame_index)
-        except EOFError:
-            break
     return frames_saved
+
 
 def extract_frames(output_frames_base_path, media_file):
     """
