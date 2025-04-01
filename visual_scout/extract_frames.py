@@ -155,7 +155,6 @@ def extract_frames_from_video(output_frames_media_path, media_file):
 
             frame_index += frame_interval
             if frame_index >= frame_count:
-                print("Reached the last frame, stopping extraction.")
                 break
 
         cap.release()
