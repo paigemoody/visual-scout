@@ -5,6 +5,7 @@ from datetime import timedelta
 import warnings
 import shutil
 from PIL import Image, UnidentifiedImageError
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from visual_scout.frame_utils import get_frame_similarity_ssim
 from visual_scout.constants import SSIM_THRESHOLD, SAMPLING_INTERVAL
 
@@ -441,6 +442,23 @@ def main_extract_frames(input_dir):
     for media_file_path in media_file_paths:
         print(f"\nExtracting frames from: {media_file_path}")
         extract_frames(full_path_output_dir, media_file_path)
+
+    # Run frame extraction in parallel
+    with ProcessPoolExecutor(max_workers=3) as executor:
+        # Submit all jobs to the executor
+        futures = {
+            executor.submit(extract_frames, full_path_output_dir, media_file_path): media_file_path
+            for media_file_path in media_file_paths
+        }
+
+        # Monitor completion
+        for future in as_completed(futures):
+            media_file = futures[future]
+            try:
+                future.result()
+                print(f"✅ Done: {media_file}")
+            except Exception as e:
+                print(f"❌ Failed: {media_file} — {e}")
 
     print("\nFrame extraction complete.")
 
