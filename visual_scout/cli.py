@@ -18,7 +18,7 @@ def main():
     parser_extract = subparsers.add_parser("extract-frames", help="Extract frames for all files within input directory")
     parser_extract.add_argument("input_dir", type=str, help="Path to the video file")
     # TODO add some sort of helper for user to show the values... or should the input be a number...?
-    parser_extract.add_argument("--similarity", default="default", choices=list(SSIM_THRESHOLDS.keys()), type=str, help="How strict should we be when determining if two frames are similar?")
+    parser_extract.add_argument("--similarity", default="default", choices=list(SSIM_THRESHOLDS.keys()), type=str, help="How strict should we be when determining if two frames are similar? (strict, loose)")
     parser_extract.set_defaults(func=lambda args: main_extract_frames(args.input_dir, args.similarity))
 
     # Generate Grids
