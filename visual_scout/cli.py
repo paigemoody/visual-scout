@@ -3,6 +3,7 @@ from visual_scout.extract_frames import main_extract_frames
 from visual_scout.extract_labels import get_labels_main
 from visual_scout.generate_grids import main_generate_grids
 from visual_scout.estimate_processing_cost import estimate_processing_cost
+from visual_scout.constants import SSIM_THRESHOLDS, SAMPLING_INTERVAL
 
 def main():
     parser = argparse.ArgumentParser(prog="visual-scout", description="Visual Scout CLI for processing video and images.")
@@ -16,7 +17,9 @@ def main():
     # Extract Frames
     parser_extract = subparsers.add_parser("extract-frames", help="Extract frames for all files within input directory")
     parser_extract.add_argument("input_dir", type=str, help="Path to the video file")
-    parser_extract.set_defaults(func=lambda args: main_extract_frames(args.input_dir))
+    # TODO add some sort of helper for user to show the values... or should the input be a number...?
+    parser_extract.add_argument("--similarity", default="default", choices=list(SSIM_THRESHOLDS.keys()), type=str, help="How strict should we be when determining if two frames are similar?")
+    parser_extract.set_defaults(func=lambda args: main_extract_frames(args.input_dir, args.similarity))
 
     # Generate Grids
     parser_grids = subparsers.add_parser("generate-grids", help="Generate image grids from extracted frames")

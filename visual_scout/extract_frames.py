@@ -7,7 +7,7 @@ import shutil
 from PIL import Image, UnidentifiedImageError
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from visual_scout.frame_utils import get_frame_similarity_ssim
-from visual_scout.constants import SSIM_THRESHOLD, SAMPLING_INTERVAL
+from visual_scout.constants import SSIM_THRESHOLDS, SAMPLING_INTERVAL
 
 
 def open_video(video_full_path):
@@ -93,7 +93,7 @@ def get_file_type_from_extension(media_file):
         raise ValueError(f"Unsupported file type: {media_file}")
 
 
-def extract_frames_from_image(output_frames_media_path, media_file):
+def extract_frames_from_image(output_frames_media_path, media_file, ssmi_threshold):
     # Handle static image case
     print(f"\n\nExtracting frames from image {media_file}...")
     frame_filename = "frame_0-00-00_0-00-00.jpg"
@@ -103,7 +103,7 @@ def extract_frames_from_image(output_frames_media_path, media_file):
     return 1
 
 
-def extract_frames_from_video(output_frames_media_path, media_file):
+def extract_frames_from_video(output_frames_media_path, media_file, ssmi_threshold):
     # Handle video case
     print(f"\n\nExtracting frames from video {media_file}...")
     saved_frames = 0
@@ -140,7 +140,7 @@ def extract_frames_from_video(output_frames_media_path, media_file):
             frame_path = os.path.join(output_frames_media_path, frame_filename)
 
             # see if current frame is substantially different from the previoiusly saved frame
-            new_frame_similar_to_previous_frame = get_frame_similarity_ssim(most_recently_saved_frame[1], frame, SSIM_THRESHOLD)
+            new_frame_similar_to_previous_frame = get_frame_similarity_ssim(most_recently_saved_frame[1], frame, ssmi_threshold)
             
             if most_recently_saved_frame is None or not new_frame_similar_to_previous_frame:
                 if cv2.imwrite(frame_path, frame):
@@ -167,7 +167,7 @@ def extract_frames_from_video(output_frames_media_path, media_file):
     return saved_frames
 
 
-def extract_frames_from_gif(output_frames_media_path, media_file):
+def extract_frames_from_gif(output_frames_media_path, media_file, ssmi_threshold):
     """
     Extracts every nth frame (based on SAMPLING_INTERVAL) from an animated GIF 
     and saves them as JPEG images with timestamp-style filenames.
@@ -219,7 +219,7 @@ def extract_frames_from_gif(output_frames_media_path, media_file):
             current_frame_array = np.array(current_frame_image)
             # Compare to previous saved frame
             is_similar = get_frame_similarity_ssim(
-                most_recently_saved_frame[1], current_frame_array, SSIM_THRESHOLD
+                most_recently_saved_frame[1], current_frame_array,ssmi_threshold
             )
             if not is_similar:
                 current_frame_image.save(frame_path)
@@ -235,7 +235,7 @@ def extract_frames_from_gif(output_frames_media_path, media_file):
     return frames_saved
 
 
-def extract_frames(output_frames_base_path, media_file):
+def extract_frames(output_frames_base_path, media_file, ssmi_threshold):
     """
     Extracts frames from a video, animated GIF, or processes a single image file.
 
@@ -287,15 +287,15 @@ def extract_frames(output_frames_base_path, media_file):
     file_type = get_file_type_from_extension(media_file)
     
     if file_type == "image":
-        total_saved_frames = extract_frames_from_image(output_frames_media_path, media_file)
+        total_saved_frames = extract_frames_from_image(output_frames_media_path, media_file, ssmi_threshold)
         return total_saved_frames
     
     elif file_type == "video":
-        total_saved_frames = extract_frames_from_video(output_frames_media_path, media_file)
+        total_saved_frames = extract_frames_from_video(output_frames_media_path, media_file, ssmi_threshold)
         return total_saved_frames
     
     elif file_type == "gif":
-        total_saved_frames = extract_frames_from_gif(output_frames_media_path, media_file)
+        total_saved_frames = extract_frames_from_gif(output_frames_media_path, media_file, ssmi_threshold)
         return total_saved_frames
     
     else:
@@ -384,7 +384,7 @@ def create_output_dir():
     return full_path_output_dir
 
 
-def main_extract_frames(input_dir):
+def main_extract_frames(input_dir, similarity):
     """
     Extracts frames from all valid video files in the specified input directory.
 
@@ -423,6 +423,8 @@ def main_extract_frames(input_dir):
         - Creates necessary directories if they don’t exist.
     """
 
+    ssmi_threshold = SSIM_THRESHOLDS[similarity]
+
     # Ensure `input_dir` is an absolute path
     if not os.path.isabs(input_dir):
         base_path = os.getcwd()
@@ -437,16 +439,11 @@ def main_extract_frames(input_dir):
 
     full_path_output_dir = create_output_dir()
 
-    # Run frame extraction
-    for media_file_path in media_file_paths:
-        print(f"\nExtracting frames from: {media_file_path}")
-        extract_frames(full_path_output_dir, media_file_path)
-
     # Run frame extraction in parallel
     with ProcessPoolExecutor(max_workers=3) as executor:
         # Submit all jobs to the executor
         futures = {
-            executor.submit(extract_frames, full_path_output_dir, media_file_path): media_file_path
+            executor.submit(extract_frames, full_path_output_dir, media_file_path, ssmi_threshold): media_file_path
             for media_file_path in media_file_paths
         }
 

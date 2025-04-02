@@ -21,7 +21,11 @@ EST_OUTPUT_TOKEN_COUNT_PER_REQUEST = 300
 
 # ------ FRAME EXTRACTION ------ #
 SAMPLING_INTERVAL=2
-SSIM_THRESHOLD=.6
+SSIM_THRESHOLDS= {
+    "loose" : .4,
+    "default" : .6,
+    "strict" : .8,
+}
 
 # ------------ #
 # DO NOT EDIT BELOW THIS LINE
