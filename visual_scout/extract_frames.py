@@ -122,7 +122,6 @@ def extract_frames_from_video(output_frames_media_path, media_file):
 
         print(f"Extracting every frames at {sampling_interval} seconds interval")
         frame_index = 0
-        # (frame_path, frame)
         most_recently_saved_frame = (None, None)
         while frame_index < frame_count:
             print(f"\n\nProcessing frame {frame_index} / {frame_count}")
@@ -140,6 +139,7 @@ def extract_frames_from_video(output_frames_media_path, media_file):
             frame_filename = f"frame_{start_time.replace(':', '-')}_{end_time.replace(':', '-')}.jpg"
             frame_path = os.path.join(output_frames_media_path, frame_filename)
 
+            # see if current frame is substantially different from the previoiusly saved frame
             new_frame_similar_to_previous_frame = get_frame_similarity_ssim(most_recently_saved_frame[1], frame, SSIM_THRESHOLD)
             
             if most_recently_saved_frame is None or not new_frame_similar_to_previous_frame:

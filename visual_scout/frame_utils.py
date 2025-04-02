@@ -54,6 +54,7 @@ def get_frame_similarity_ssim(frame_1, frame_2, threshold):
     color_frame_2, gray_frame_2 = load_frame(frame_2)
 
     # Compute the SSIM between the two grayscale frames
+    # TODO remove full=True - when we don't need the full ssmi image returned
     ssim_index, ssim_map = compare_ssim(gray_frame_1, gray_frame_2, full=True)
     print(f"SSIM Index: {ssim_index}")
 
