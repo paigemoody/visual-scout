@@ -34,20 +34,20 @@ def open_video(video_full_path):
     """
 
     if not os.path.exists(video_full_path):
-        warning_message = f"Video file not found: {video_full_path}"
+        warning_message = f"\n\n[FileNotFoundWarning] Video file not found: {video_full_path}"
         raise FileNotFoundError(warning_message)
 
     try:
         cap = cv2.VideoCapture(video_full_path)
         if not cap.isOpened():
-            warning_message = f"\n\nUnable to open video file: {video_full_path}. Skipping..."
+            warning_message = f"\n\n[InvalidVideoWarning] Unable to open video file: {video_full_path}. Skipping..."
             warnings.warn(warning_message)
-            return False       
+            return False
         return cap
 
     except cv2.error as e:
         print("sending warning now!!")
-        warnings.warn(f"OpenCV encountered an error while opening video {video_full_path}: {str(e)}") 
+        warnings.warn(f"\n\n[OpenCVIssueWarning] OpenCV encountered an error while opening video {video_full_path}: {str(e)}") 
         return False
 
 def open_gif(gif_full_path):
@@ -93,7 +93,7 @@ def get_file_type_from_extension(media_file):
         raise ValueError(f"Unsupported file type: {media_file}")
 
 
-def extract_frames_from_image(output_frames_media_path, media_file, ssmi_threshold):
+def extract_frames_from_image(output_frames_media_path, media_file):
     # Handle static image case
     print(f"\n\nExtracting frames from image {media_file}...")
     frame_filename = "frame_0-00-00_0-00-00.jpg"
@@ -103,7 +103,7 @@ def extract_frames_from_image(output_frames_media_path, media_file, ssmi_thresho
     return 1
 
 
-def extract_frames_from_video(output_frames_media_path, media_file, ssmi_threshold):
+def extract_frames_from_video(output_frames_media_path, media_file, ssmi_threshold, use_static_sample_rate):
     # Handle video case
     print(f"\n\nExtracting frames from video {media_file}...")
     saved_frames = 0
@@ -139,8 +139,10 @@ def extract_frames_from_video(output_frames_media_path, media_file, ssmi_thresho
             frame_filename = f"frame_{start_time.replace(':', '-')}_{end_time.replace(':', '-')}.jpg"
             frame_path = os.path.join(output_frames_media_path, frame_filename)
 
-            # see if current frame is substantially different from the previoiusly saved frame
-            new_frame_similar_to_previous_frame = get_frame_similarity_ssim(most_recently_saved_frame[1], frame, ssmi_threshold)
+            # see if current frame is substantially different from the previoiusly saved frame, if use_static_sample_rate is false
+            new_frame_similar_to_previous_frame = False
+            if not use_static_sample_rate:
+                new_frame_similar_to_previous_frame = get_frame_similarity_ssim(most_recently_saved_frame[1], frame, ssmi_threshold)
             
             if most_recently_saved_frame is None or not new_frame_similar_to_previous_frame:
                 if cv2.imwrite(frame_path, frame):
@@ -167,7 +169,7 @@ def extract_frames_from_video(output_frames_media_path, media_file, ssmi_thresho
     return saved_frames
 
 
-def extract_frames_from_gif(output_frames_media_path, media_file, ssmi_threshold):
+def extract_frames_from_gif(output_frames_media_path, media_file, ssmi_threshold, use_static_sample_rate):
     """
     Extracts every nth frame (based on SAMPLING_INTERVAL) from an animated GIF 
     and saves them as JPEG images with timestamp-style filenames.
@@ -217,10 +219,12 @@ def extract_frames_from_gif(output_frames_media_path, media_file, ssmi_threshold
             jpeg does not support P mode — it requires images to be in RGB or grayscale."""
             current_frame_image = gif.convert("RGB")
             current_frame_array = np.array(current_frame_image)
-            # Compare to previous saved frame
-            is_similar = get_frame_similarity_ssim(
-                most_recently_saved_frame[1], current_frame_array,ssmi_threshold
-            )
+            # Compare to previous saved frame. If using static sample rate, skip comparison
+            is_similar = False
+            if not use_static_sample_rate:
+                is_similar = get_frame_similarity_ssim(
+                    most_recently_saved_frame[1], current_frame_array,ssmi_threshold
+                )
             if not is_similar:
                 current_frame_image.save(frame_path)
                 most_recently_saved_frame = (frame_path, current_frame_array)
@@ -235,7 +239,7 @@ def extract_frames_from_gif(output_frames_media_path, media_file, ssmi_threshold
     return frames_saved
 
 
-def extract_frames(output_frames_base_path, media_file, ssmi_threshold):
+def extract_frames(output_frames_base_path, media_file, ssmi_threshold, use_static_sample_rate):
     """
     Extracts frames from a video, animated GIF, or processes a single image file.
 
@@ -287,15 +291,15 @@ def extract_frames(output_frames_base_path, media_file, ssmi_threshold):
     file_type = get_file_type_from_extension(media_file)
     
     if file_type == "image":
-        total_saved_frames = extract_frames_from_image(output_frames_media_path, media_file, ssmi_threshold)
+        total_saved_frames = extract_frames_from_image(output_frames_media_path, media_file)
         return total_saved_frames
     
     elif file_type == "video":
-        total_saved_frames = extract_frames_from_video(output_frames_media_path, media_file, ssmi_threshold)
+        total_saved_frames = extract_frames_from_video(output_frames_media_path, media_file, ssmi_threshold, use_static_sample_rate)
         return total_saved_frames
     
     elif file_type == "gif":
-        total_saved_frames = extract_frames_from_gif(output_frames_media_path, media_file, ssmi_threshold)
+        total_saved_frames = extract_frames_from_gif(output_frames_media_path, media_file, ssmi_threshold, use_static_sample_rate)
         return total_saved_frames
     
     else:
@@ -384,7 +388,7 @@ def create_output_dir():
     return full_path_output_dir
 
 
-def main_extract_frames(input_dir, similarity):
+def main_extract_frames(input_dir, similarity, use_static_sample_rate=False):
     """
     Extracts frames from all valid video files in the specified input directory.
 
@@ -423,7 +427,6 @@ def main_extract_frames(input_dir, similarity):
         - Creates necessary directories if they don’t exist.
     """
 
-    ssmi_threshold = SSIM_THRESHOLDS[similarity]
 
     # Ensure `input_dir` is an absolute path
     if not os.path.isabs(input_dir):
@@ -439,11 +442,14 @@ def main_extract_frames(input_dir, similarity):
 
     full_path_output_dir = create_output_dir()
 
+    ssmi_threshold = SSIM_THRESHOLDS[similarity]
+
+
     # Run frame extraction in parallel
     with ProcessPoolExecutor(max_workers=3) as executor:
         # Submit all jobs to the executor
         futures = {
-            executor.submit(extract_frames, full_path_output_dir, media_file_path, ssmi_threshold): media_file_path
+            executor.submit(extract_frames, full_path_output_dir, media_file_path, ssmi_threshold, use_static_sample_rate): media_file_path
             for media_file_path in media_file_paths
         }
 

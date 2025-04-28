@@ -66,7 +66,7 @@ class TestExtractFrames(unittest.TestCase):
         invalid_video_file = os.path.join(self.test_input_dir, video_name)
 
         with self.assertWarns(Warning):
-            extract_frames(self.temp_output_frames_dir, invalid_video_file)
+            extract_frames(self.temp_output_frames_dir, invalid_video_file, .6, False)
 
         output_path = os.path.join(
             self.temp_output_dir,
@@ -78,7 +78,7 @@ class TestExtractFrames(unittest.TestCase):
 
     def test_extract_frames_success(self):
         """Test if frames are extracted and saved correctly from a valid video file."""
-        extract_frames(self.temp_output_frames_dir, self.valid_video_path)
+        extract_frames(self.temp_output_frames_dir, self.valid_video_path, .6, False)
 
         self.assertTrue(
             os.path.exists(self.expected_output_dir_valid_video),
@@ -94,15 +94,13 @@ class TestExtractFrames(unittest.TestCase):
     def test_extract_frames_file_not_found(self):
         """Test that extract_frames raises FileNotFoundError for a non-existent file."""
         with self.assertRaises(FileNotFoundError):
-            extract_frames(self.temp_output_frames_dir, "non_existent_video.mov")
+            extract_frames(self.temp_output_frames_dir, "non_existent_video.mov", .6, False)
 
     def test_extract_frames_from_directory(self):
         """Test if extract_frames_from_directory correctly processes multiple video files in a directory
         and ignores non-video files."""
 
-        # Ensure that invalid video isn't processed
-        with self.assertWarns(Warning):
-            main_extract_frames(self.test_input_dir)
+        main_extract_frames(self.test_input_dir, "default", False)
 
         # Ensure the non-valid files did not trigger frame extraction
         expected_skipped_files = ["random.txt", "invalid_video.mov"]
@@ -123,22 +121,31 @@ class TestExtractFrames(unittest.TestCase):
             "example_gif",
         ]
 
-        for filename in base_names:
-            valid_output_dir = os.path.join(
-                self.temp_output_dir, "output_frames", f"{filename}__frames"
+        expected_output_subdirs = [
+            'example_video_horizontal__frames',
+            'example_gif__frames',
+            'example_video_vertical__frames',
+            'example_image__frames'
+        ]
+
+        for output_path_name in expected_output_subdirs:
+            
+            valid_output_path = os.path.join(
+                self.temp_output_dir, "output_frames", output_path_name
             )
+
             self.assertTrue(
-                os.path.exists(valid_output_dir),
-                f"Frame directory for {valid_output_dir} was not created.",
+                os.path.exists(valid_output_path),
+                f"Frame directory for {output_path_name} was not created.",
             )
             extracted_frames = [
-                f for f in os.listdir(valid_output_dir) if f.endswith(".jpg")
+                f for f in os.listdir(valid_output_path) if f.endswith(".jpg")
             ]
 
             self.assertGreater(
                 len(extracted_frames),
                 0,
-                f"No frames were extracted for {valid_output_dir}.",
+                f"No frames were extracted for {valid_output_path}.",
             )
 
 
@@ -219,12 +226,30 @@ class TestOpenVideo(unittest.TestCase):
             "example_input_dir_short",
             "example_video_horizontal.mov",
         )
+        self.invalid_video_path = os.path.join(
+            os.path.dirname(__file__),
+            "fixtures",
+            "example_input_dir_short",
+            "invalid_video.mov",
+        )
+        self.temp_output_dir_name = "temp_output_dir"
+    
+    def tearDown(self):
+        """Remove the temp output directory after each test."""
+        if os.path.exists(self.temp_output_dir_name):
+            shutil.rmtree(self.temp_output_dir_name)
+        print(f"Deleted temporary directory: {self.temp_output_dir_name}")
 
     def test_open_video_success(self):
         cap = open_video(self.valid_video_path)
         self.assertIsNotNone(cap)
         self.assertTrue(cap.isOpened())
         cap.release()
+
+    def test_extract_frames_invalid_video(self):
+        """Test that extract_frames raises a warning when given an invalid video file."""
+        with self.assertWarns(UserWarning):
+            extract_frames(self.temp_output_dir_name, self.invalid_video_path, .6, False)
 
     def test_open_video_missing_file(self):
         with self.assertRaises(FileNotFoundError):
@@ -286,7 +311,7 @@ class TestExtractFramesFromGif(unittest.TestCase):
         shutil.rmtree(self.temp_dir)
 
     def test_extract_frames_from_gif(self):
-        count = extract_frames_from_gif(self.temp_dir, self.gif_path)
+        count = extract_frames_from_gif(self.temp_dir, self.gif_path, .6, False)
         self.assertGreater(count, 0)
         saved_files = [f for f in os.listdir(self.temp_dir) if f.endswith(".jpg")]
         self.assertEqual(count, len(saved_files))

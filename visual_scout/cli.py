@@ -17,9 +17,10 @@ def main():
     # Extract Frames
     parser_extract = subparsers.add_parser("extract-frames", help="Extract frames for all files within input directory")
     parser_extract.add_argument("input_dir", type=str, help="Path to the video file")
+    parser_extract.add_argument("--use-static-sample-rate",action="store_true", help="If set, use 2 second sampling rate rather than smart sampling. See documentation on when static sampling slower and more costly is the better option.", default=False)
     # TODO add some sort of helper for user to show the values... or should the input be a number...?
     parser_extract.add_argument("--similarity", default="default", choices=list(SSIM_THRESHOLDS.keys()), type=str, help="How strict should we be when determining if two frames are similar? (strict, loose)")
-    parser_extract.set_defaults(func=lambda args: main_extract_frames(args.input_dir, args.similarity))
+    parser_extract.set_defaults(func=lambda args: main_extract_frames(args.input_dir, args.similarity, args.use_static_sample_rate))
 
     # Generate Grids
     parser_grids = subparsers.add_parser("generate-grids", help="Generate image grids from extracted frames")
