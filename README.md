@@ -151,8 +151,10 @@ By default the process uses a 'smart sampling' method to reduce the number of su
 **Example 1**: You want to do smart sampling using the default comparison threshold (reccomended).
 
 ```
-    visual-scout extract-frames visual_scout/example_input
+    visual-scout extract-frames <your directory path>
 ```
+
+*Note: If you want to use example videos to get a sense of the process run you can use `visual_scout/example_input` as your directory path.*
 
 **Example 2**: You want to do smart sampling, but be more "strict" about when we determine two frames are "suffiently similar". 
 
