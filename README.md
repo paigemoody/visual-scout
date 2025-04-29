@@ -122,7 +122,7 @@ To use example input directory containing example media files run:
 
 This process extracts frames from each video in the given directory and writes each image to a newly created `output/output_frames/` directory, in a subdirectory corresponding to the input file name.
 
-By default the process uses a 'smart sampling' method to reduce the number of sufficiently similar frames by comparing frames at two second intervals. 'Smart sampling' leverages Structural Similarity Index and is valuable for reducing the volume of data sent in subsequent steps to OpenAI, reducing cost and processing time (more docs on this TK). To bypass the smart sampling see optional arguments below.
+By default the process uses a 'smart sampling' method to reduce the number of sufficiently similar frames by comparing frames at two second intervals. 'Smart sampling' leverages Structural Similarity Index and is valuable for reducing the volume of data sent in subsequent steps to OpenAI, reducing cost and processing time (more docs on this TK). To bypass opt out of smart sampling in favor of sampling at a static interval see optional arguments below.
 
 ```
     visual-scout extract-frames <your directory path> [options]
