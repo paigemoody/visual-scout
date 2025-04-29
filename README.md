@@ -142,9 +142,9 @@ By default the process uses a 'smart sampling' method to reduce the number of su
 - `--similarity` (optional, default=default):
     - Controls how strict the frame similarity comparison is. 
     - Choices:
-        - `strict` (ie. results in more output frames - a more conservative approach to filtering out "similar" frames)
+        - `strict` (a more conservative approach to filtering out "similar" frames - results in more output frames - )
         - `default`
-        - `loose`  (ie. results in fewer output frames)
+        - `loose`  (a more aggressive approach to filtering out "similar" frames - results in fewer output frames)
 
 ## Example
 
