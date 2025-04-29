@@ -140,7 +140,7 @@ By default the process uses a 'smart sampling' method to reduce the number of su
     - If set, frames will be sampled every 2 seconds, ignoring content similarity.
 
 - `--similarity` (optional, default=default):
-    - Controls how strict the frame similarity comparison is. 
+    - Controls strictness of frame similarity comparison, if using "smart sampling".
     - Choices:
         - `strict` (a more conservative approach to filtering out "similar" frames - results in more output frames - )
         - `default`
