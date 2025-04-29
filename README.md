@@ -89,7 +89,7 @@ visual-scout --help
 
 # Process Video
 
-Note: This process is still under construction - for now there are four commands that must be run sequentially to generate output data.
+Note: This CLI is still under construction - for now there are four commands that must be run sequentially to generate output data.
 
 ## `estimate-cost`
 
