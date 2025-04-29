@@ -104,7 +104,7 @@ This command generates a cost estimate to process all videos, gifs and images in
 
 ### Arguments
 
-`input_dir` (required):
+- `input_dir` (required):
     - Path to the directory containing video/image files.
     - Example: `visual_scout/example_input`
 
@@ -130,16 +130,16 @@ By default the process will use a 'smart sampling' method to reduce the number o
 
 ## Arguments
 
-`input_dir` (required):
+- `input_dir` (required):
     - Path to the directory containing video/image files.
     - Example: `visual_scout/example_input`
 
 ## Options
 
-`--use-static-sample-rate` (optional, flag):
+- `--use-static-sample-rate` (optional, flag):
     - If set, frames will be sampled every 2 seconds, ignoring content similarity.
 
-`--similarity` (optional, default=default):
+- `--similarity` (optional, default=default):
     - Controls how strict the frame similarity comparison is. 
     - Choices:
         - `strict` (ie. results in more output frames - a more conservative approach to filtering out "similar" frames)
@@ -184,7 +184,7 @@ This process will combine extracted frames in the `output/output_frames/` create
 
 ### Options
 
-`--grid-size` (optional, default=3):
+- `--grid-size` (optional, default=3):
     - Size of the grid (e.g., 3x3).
     - Note that it is reccomended to use the default value for now as OpenAI is the only supported model. 
 
@@ -212,11 +212,11 @@ The output of this command includes:
 
 ### Arguments
 
-`--open-ai-key` (required):
+- `--open-ai-key` (required):
     - Your OpenAI API key.
     - To generate an API key, first [create an OpenAI account](https://auth.openai.com/authorize?audience=https%3A%2F%2Fapi.openai.com%2Fv1&auth0Client=eyJuYW1lIjoiYXV0aDAtc3BhLWpzIiwidmVyc2lvbiI6IjEuMjEuMCJ9&client_id=DRivsnm2Mu42T3KOpqdtwB3NYviHYzwD&device_id=f2886c79-14d0-49c3-8362-82b93d29b456&ext-login-allow-phone=true&ext-use-new-phone-ui=true&issuer=https%3A%2F%2Fauth.openai.com&max_age=0&nonce=cVdJRWJfTzlSSkp0MU8yRTFPRU8xR0FnVWJlRVZzNlRBTGFORGNicXZXSQ%3D%3D&redirect_uri=https%3A%2F%2Fplatform.openai.com%2Fauth%2Fcallback&response_mode=query&response_type=code&scope=openid+profile+email+offline_access&screen_hint=signup&state=QUoxbTZOcHFxdFJ6LkZNX3dvOEtDQ2VyZ3JNbS5iUHYxN2dsdnFYQ21hQQ%3D%3D&flow=treatment), then [generate a new API key](https://platform.openai.com/api-keys)
 
-`--open-ai-model` (optional, default=gpt-4o-mini):
+- `--open-ai-model` (optional, default=gpt-4o-mini):
     - OpenAI model to use for labeling (e.g., `gpt-4o-mini`, `gpt-4o`)
     - Note: 
         - I'd strongly reccomend starting with `gpt-4o-mini` because it works reasonably well and is significantly cheaper (especially important if you'll be processing a lot of videos!).
