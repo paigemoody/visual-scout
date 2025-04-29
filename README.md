@@ -1,6 +1,6 @@
 # visual-scout (🚧 WIP)
 
-A work-in-progress tool for extracting visual elements (objects and text) from a set of videos, using OpenAI.
+A work-in-progress tool for extracting visual elements (objects and text) from a set of media file (videos, gifs, images) using OpenAI.
 
 ## Requirements
 
