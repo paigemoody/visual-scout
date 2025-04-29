@@ -159,19 +159,19 @@ By default the process uses a 'smart sampling' method to reduce the number of su
 **Example 2**: You want to extract frames using smart sampling, but want to be more "strict" about concluding that frames are "suffiently similar". 
 
 ```
-    visual-scout extract-frames visual_scout/example_input --similarity strict
+    visual-scout extract-frames <your directory path> --similarity strict
 ```
 
 **Example 3**: You want to extract frames using smart sampling, but want to be more aggressive with sampling in order to filter out more frames - you are comforable with deduplicating frames that are loosely similar.
 
 ```
-    visual-scout extract-frames visual_scout/example_input --similarity loose
+    visual-scout extract-frames <your directory path> --similarity loose
 ```
 
 **Example 4**: You just want to extract frames at 2 second intervals, skipping smart sampling.
 
 ```
-    visual-scout extract-frames visual_scout/example_input --use-static-sample-rate
+    visual-scout extract-frames <your directory path> --use-static-sample-rate
 ```
 
 ## Generate Grids 
