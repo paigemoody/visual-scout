@@ -229,9 +229,6 @@ The output of this command includes:
 visual-scout generate-labels --open-ai-key <your OpenAI API key>
 ``` 
 
-- Add optional additional arg `--open-ai-model` if you want to specify a model. The default is `gpt-4o-mini`
-- This will send the grids produced in the previous step to OpenAI along with a prompt 
-
 # Development Setup
 
 The following is only necessary if you are making changes to the underlying package logic.
