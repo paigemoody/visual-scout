@@ -154,9 +154,9 @@ By default the process uses a 'smart sampling' method to reduce the number of su
     visual-scout extract-frames <your directory path>
 ```
 
-*Note: If you want to use example videos to get a sense of the process run you can use `visual_scout/example_input` as your directory path.*
+*Note: If you want to use example videos to get a sense of the process you can use `visual_scout/example_input` as your directory path.*
 
-**Example 2**: You want to extract frames using smart sampling, but want to be more "strict" about when we determine two frames are "suffiently similar". 
+**Example 2**: You want to extract frames using smart sampling, but want to be more "strict" about concluding that frames are "suffiently similar". 
 
 ```
     visual-scout extract-frames visual_scout/example_input --similarity strict
@@ -168,7 +168,7 @@ By default the process uses a 'smart sampling' method to reduce the number of su
     visual-scout extract-frames visual_scout/example_input --similarity loose
 ```
 
-**Example 4**: You just want to extract frames at the set interval of every 2 seconds.
+**Example 4**: You just want to extract frames at 2 second intervals, skipping smart sampling.
 
 ```
     visual-scout extract-frames visual_scout/example_input --use-static-sample-rate
@@ -176,7 +176,7 @@ By default the process uses a 'smart sampling' method to reduce the number of su
 
 ## Generate Grids 
 
-This process will combine extracted frames in the `output/output_frames/` created in the previous step into sequential image grids (NxN collages), defaulting to 3x3. Grid images are written to a newly created directory called `outputs/output_grids/` in a subdirectory named according to the input media file name. 
+This process combines extracted frames in the `output/output_frames/` (created in the previous step) into sequential image grids (NxN collages,, defaulting to 3x3). Grid images are written to a newly created directory called `outputs/output_grids/` in a subdirectory named according to the input media file name. 
 
 ### Usage
 
@@ -187,7 +187,7 @@ This process will combine extracted frames in the `output/output_frames/` create
 ### Options
 
 - `--grid-size` (optional, default=3):
-    - Size of the grid (e.g., 3x3).
+    - Size of the grids (e.g., 3x3).
     - Note that it is reccomended to use the default value for now as OpenAI is the only supported model. 
 
 ### Example
@@ -196,14 +196,13 @@ This process will combine extracted frames in the `output/output_frames/` create
     visual-scout generate-grids
 ```
 
-
 ## `generate-labels`
 
-This is where you will use an OpenAI model (just OpenAI is supported, for now) to extact information about the visual elements of your videos. It sends each media file's grided frames generated above and stored in `outputs/output_grids/`, to OpenAI along with a promot which instructs the model to return a json object containing everything it sees in the video. 
+This processes uses an OpenAI model (just OpenAI is supported, for now) to extact information about the visual elements of your videos. It sends each media file's grided frames (generated above and stored in `outputs/output_grids/`) to OpenAI along with a promot which instructs the model to return a json object containing everything it "sees" in the video. 
 
 The output of this command includes:
-    - An individual json file containing the visual elements for each individual grid file, and 
-    - One large json file that combines all the individual json files into one json file per input media file, associating each group of elements to their corresponding timestamp.
+- An individual json file containing the visual elements for each individual grid file, and 
+- One large json file that combines all the individual json files into one json file per input media file, associating each group of elements to their corresponding timestamp.
 
 
 ### Usage
@@ -222,7 +221,7 @@ The output of this command includes:
     - OpenAI model to use for labeling (e.g., `gpt-4o-mini`, `gpt-4o`)
     - Note: 
         - I'd strongly reccomend starting with `gpt-4o-mini` because it works reasonably well and is significantly cheaper (especially important if you'll be processing a lot of videos!).
-        - The `cost-estimation` command above will help you estimate processing cost for your dataset for each model.
+        - The `cost-estimation` command above estimates processing cost for your dataset for each supported model - a good place to start when chosing which model to use.
 
 ### Example
 
