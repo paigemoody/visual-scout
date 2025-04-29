@@ -128,13 +128,13 @@ By default the process uses a 'smart sampling' method to reduce the number of su
     visual-scout extract-frames <your directory path> [options]
 ```
 
-## Arguments
+### Arguments
 
 - `input_dir` (required):
     - Path to the directory containing video/image files.
     - Example: `visual_scout/example_input`
 
-## Options
+### Options
 
 - `--use-static-sample-rate` (optional, flag):
     - If set, frames will be sampled every 2 seconds, ignoring content similarity.
@@ -146,7 +146,7 @@ By default the process uses a 'smart sampling' method to reduce the number of su
         - `default`
         - `loose`  (a more aggressive approach to filtering out "similar" frames - results in fewer output frames)
 
-## Example
+### Example
 
 **Example 1**: You want to extract frames using smart sampling with the default comparison threshold (reccomended).
 
