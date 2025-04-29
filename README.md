@@ -87,7 +87,7 @@ pipx install git+https://github.com/paigemoody/visual-scout.git
 visual-scout --help
 ```
 
-# Process Video
+# Process Data
 
 Note: This CLI is still under construction - for now there are four commands that must be run sequentially to generate output data.
 
