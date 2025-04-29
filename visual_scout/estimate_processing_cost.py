@@ -23,13 +23,47 @@ def count_gif_frames(gif_path):
         return 0
 
 def get_list_filenames_from_filepaths(filepaths_list):
-    filenames_list = [file.split("/")[-1] for file in filepaths_list]
+    filenames_list = [file_path.split("/")[-1] for file_path in filepaths_list]
     if filenames_list:
         return filenames_list
     return ""
 
+
+def convert_video_to_mp4(video_path):
+    """Convert any video format to MP4 without audio using ffmpeg and log detailed output.
+    
+    # TODO - see if this is actually necessary...
+    """
+    # Define the output MP4 file path
+    base, ext = os.path.splitext(video_path)
+    mp4_video_path = f"{base}.mp4"
+    
+    # Use the ultrafast preset, disable audio with -an, and don't encode audio
+    process = subprocess.Popen([
+        "ffmpeg", "-i", video_path, "-vcodec", "libx264", "-preset", "ultrafast", 
+        "-crf", "28", "-an",  # -an disables audio
+        mp4_video_path
+    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+    # Capture the output and errors for logging purposes
+    stdout, stderr = process.communicate()
+
+    # Log the ffmpeg output for debugging
+    print(f"FFmpeg STDOUT: {stdout}")
+    print(f"FFmpeg STDERR: {stderr}")
+    
+    return mp4_video_path
+
+
 def get_video_duration(video_path):
-    """Extract the duration of a video file using ffprobe."""
+    """Extract the duration of a video file, converting it to MP4 if necessary."""
+    # If the video is not in MP4 format, convert it?
+    # base, ext = os.path.splitext(video_path)
+    # if ext.lower() != '.mp4':
+    #     print(f"Converting {video_path} to MP4...")
+    #     video_path = convert_video_to_mp4(video_path)
+    
+    # Extract the duration of the MP4 video
     result = subprocess.run(
         [
             "ffprobe", "-v", "error", "-select_streams", "v:0",
@@ -38,13 +72,13 @@ def get_video_duration(video_path):
         ],
         capture_output=True, text=True
     )
+    
     try:
-        duration = float(result.stdout.strip(video_path))
+        duration = float(result.stdout.strip())
         return duration
     except Exception as e:
         print(f"\t⚠️ Invalid video {video_path} cannot be processed -- will be skipped")
         return 0.0
-
 
 def estimate_processing_cost(input_dir):
     """Estimate processing cost based on video durations and image counts."""
@@ -74,9 +108,9 @@ def estimate_processing_cost(input_dir):
         "other": []
     }
 
-    for file in all_files:
-        file_extension = file.lower()[-4:]
-        file_full_path = os.path.join(input_dir, file)
+    for file_path in all_files:
+        file_extension = file_path.lower()[-4:]
+        file_full_path = os.path.join(input_dir, file_path)
         if file_extension in video_file_exts:
             video_filepaths.append(file_full_path)
         elif file_extension in image_file_exts:
@@ -92,11 +126,14 @@ def estimate_processing_cost(input_dir):
     if len(video_filepaths) > 0:
         print(f"\n\nCalculating total duration of {len(video_filepaths)} input video(s)...\n")
     total_video_duration = 0
-    for file in video_filepaths:
-        duration = get_video_duration(file)
+    for file_path in video_filepaths:
+        duration = get_video_duration(file_path)
+        print(f"\nduration {file_path}: {duration/60} minutes")
         if duration <=0:
-            invalid_filepaths["video"].append(file)
+            invalid_filepaths["video"].append(file_path)
         total_video_duration += duration
+    
+    print("total_video_duration:", total_video_duration)
     
     total_video_frames_to_process = 0
     if total_video_duration > 0:
@@ -108,9 +145,9 @@ def estimate_processing_cost(input_dir):
         print(f"\n\nCalculating total frame count of {len(gif_filepaths)} input gif(s)...")
     total_gif_frames = 0
     for file in gif_filepaths:
-        frame_count = count_gif_frames(file)
+        frame_count = count_gif_frames(file_path)
         if frame_count <=0:
-            invalid_filepaths["gif"].append(file)
+            invalid_filepaths["gif"].append(file_path)
         total_gif_frames += frame_count
 
     total_gif_frames_to_process = 0

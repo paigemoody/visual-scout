@@ -1,9 +1,13 @@
 import cv2
 import os
+import numpy as np
 from datetime import timedelta
 import warnings
 import shutil
 from PIL import Image, UnidentifiedImageError
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from visual_scout.frame_utils import get_frame_similarity_ssim
+from visual_scout.constants import SSIM_THRESHOLDS, SAMPLING_INTERVAL
 
 
 def open_video(video_full_path):
@@ -30,23 +34,20 @@ def open_video(video_full_path):
     """
 
     if not os.path.exists(video_full_path):
-        warning_message = f"Video file not found: {video_full_path}"
+        warning_message = f"\n\n[FileNotFoundWarning] Video file not found: {video_full_path}"
         raise FileNotFoundError(warning_message)
 
     try:
         cap = cv2.VideoCapture(video_full_path)
-        print(f"cap: {cap.isOpened()}")
         if not cap.isOpened():
-            print("cap not opened")
-            warning_message = f"\n\nUnable to open video file: {video_full_path}. Skipping..."
+            warning_message = f"\n\n[InvalidVideoWarning] Unable to open video file: {video_full_path}. Skipping..."
             warnings.warn(warning_message)
-            print("sent warning") 
-            return False       
+            return False
         return cap
 
     except cv2.error as e:
         print("sending warning now!!")
-        warnings.warn(f"OpenCV encountered an error while opening video {video_full_path}: {str(e)}") 
+        warnings.warn(f"\n\n[OpenCVIssueWarning] OpenCV encountered an error while opening video {video_full_path}: {str(e)}") 
         return False
 
 def open_gif(gif_full_path):
@@ -75,7 +76,170 @@ def open_gif(gif_full_path):
         return None
 
 
-def extract_frames(output_frames_base_path, media_file):
+def get_file_type_from_extension(media_file):
+    # Determine if input is a video, animated GIF, or static image
+    video_extensions = {'.mp4', '.avi', '.mov', '.mkv', '.flv', '.wmv'}
+    image_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.webp'}
+    gif_extensions = {'.gif'}
+    extension = os.path.splitext(media_file)[1].lower()
+
+    if extension in video_extensions:
+        return "video"
+    elif extension in image_extensions:
+        return "image"
+    elif extension in gif_extensions:
+        return "gif"  
+    else:
+        raise ValueError(f"Unsupported file type: {media_file}")
+
+
+def extract_frames_from_image(output_frames_media_path, media_file):
+    # Handle static image case
+    print(f"\n\nExtracting frames from image {media_file}...")
+    frame_filename = "frame_0-00-00_0-00-00.jpg"
+    frame_path = os.path.join(output_frames_media_path, frame_filename)
+    shutil.copy(media_file, frame_path)
+    print(f"Saved image as frame: {frame_path}")
+    return 1
+
+
+def extract_frames_from_video(output_frames_media_path, media_file, ssmi_threshold, use_static_sample_rate):
+    # Handle video case
+    print(f"\n\nExtracting frames from video {media_file}...")
+    saved_frames = 0
+    cap = open_video(media_file)
+    if cap:
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        duration = frame_count / fps
+
+        print(f"Video FPS: {fps}")
+        print(f"Total Frames: {frame_count}")
+        print(f"Video Duration: {timedelta(seconds=duration)}")
+
+        sampling_interval = SAMPLING_INTERVAL  # Extract a frame every 2 seconds
+        frame_interval = round(fps * sampling_interval)  # Force rounding to nearest integer frame count
+
+        print(f"Extracting every frames at {sampling_interval} seconds interval")
+        frame_index = 0
+        most_recently_saved_frame = (None, None)
+        while frame_index < frame_count:
+            print(f"\n\nProcessing frame {frame_index} / {frame_count}")
+            cap.set(cv2.CAP_PROP_POS_FRAMES, min(frame_index, frame_count - 1))
+            ret, frame = cap.read()
+            
+            if not ret:
+                print(f"Warning: Could not read frame at index {frame_index}. Skipping...")
+                break
+
+            timestamp = round(frame_index / fps, 2)
+            start_time = str(timedelta(seconds=int(timestamp)))
+            end_time = str(timedelta(seconds=int(timestamp + sampling_interval)))
+
+            frame_filename = f"frame_{start_time.replace(':', '-')}_{end_time.replace(':', '-')}.jpg"
+            frame_path = os.path.join(output_frames_media_path, frame_filename)
+
+            # see if current frame is substantially different from the previoiusly saved frame, if use_static_sample_rate is false
+            new_frame_similar_to_previous_frame = False
+            if not use_static_sample_rate:
+                new_frame_similar_to_previous_frame = get_frame_similarity_ssim(most_recently_saved_frame[1], frame, ssmi_threshold)
+            
+            if most_recently_saved_frame is None or not new_frame_similar_to_previous_frame:
+                if cv2.imwrite(frame_path, frame):
+                    print(f"Saved: {frame_path}")
+                    saved_frames += 1
+                    most_recently_saved_frame = (frame_path, frame)
+                else:
+                    warnings.warn(f"Error saving: {frame_filename}")
+            
+            else:
+                print(f"\nSKIPPING {frame_path}")
+
+            frame_index += frame_interval
+            if frame_index >= frame_count:
+                break
+
+        cap.release()
+    
+    if saved_frames == 0:
+        os.rmdir(output_frames_media_path)
+        print(f"Removed empty output directory: {output_frames_media_path}")
+    else:
+        print(f"Frames saved: {saved_frames} in {output_frames_media_path}")
+    return saved_frames
+
+
+def extract_frames_from_gif(output_frames_media_path, media_file, ssmi_threshold, use_static_sample_rate):
+    """
+    Extracts every nth frame (based on SAMPLING_INTERVAL) from an animated GIF 
+    and saves them as JPEG images with timestamp-style filenames.
+
+    Args:
+        output_frames_media_path (str): Directory path to save extracted frames.
+        media_file (str): Path to the input GIF file.
+
+    Returns:
+        int: The number of frames saved.
+    """
+    # TODO - Right now this grabs every other frame (based on SAMPLING_INTERVAL).
+    # This is probably overkill — consider making it smarter based on actual frame content.
+    
+    print(f"\n\nExtracting frames from animated GIF: {media_file}...")
+    
+    # Open the GIF using a helper function that returns a PIL Image object
+    gif = open_gif(media_file)
+    
+    frame_index = 0        # Keeps track of current frame position
+    frames_saved = 0       # Counter for how many frames are actually saved
+    most_recently_saved_frame = (None, None)
+
+    while True:
+        try:
+            # Seek to the correct frame and convert to RGB before saving as JPEG
+            gif.seek(frame_index)
+        except EOFError:
+            # No more frames to read — break out of loop
+            break
+
+        # Format the frame index into a timestamp-style string like "00-00-03"
+        # Note: This assumes fewer than 100 frames for consistent filename format
+        if frame_index <= 9:
+            frame_index_formatted = f"0{str(frame_index)}"
+        else:
+            frame_index_formatted = str(frame_index)
+        
+        frame_filename = f"frame_00-00-{frame_index_formatted}_00-00-{frame_index_formatted}.jpg"
+        frame_path = os.path.join(output_frames_media_path, frame_filename)
+        
+        # Evaluate frame similarity only if it's the first frame or an nth frame
+        is_even_or_zero = frame_index % SAMPLING_INTERVAL == 0
+        if is_even_or_zero:
+            """Note: GIF frames are usually stored in P (palette-based) mode — 
+            a limited 256-color indexed format used for small file sizes. 
+            jpeg does not support P mode — it requires images to be in RGB or grayscale."""
+            current_frame_image = gif.convert("RGB")
+            current_frame_array = np.array(current_frame_image)
+            # Compare to previous saved frame. If using static sample rate, skip comparison
+            is_similar = False
+            if not use_static_sample_rate:
+                is_similar = get_frame_similarity_ssim(
+                    most_recently_saved_frame[1], current_frame_array,ssmi_threshold
+                )
+            if not is_similar:
+                current_frame_image.save(frame_path)
+                most_recently_saved_frame = (frame_path, current_frame_array)
+                frames_saved += 1
+                print(f"Saved: {frame_path}")
+            else:
+                print(f"\nSKIPPING {frame_path}")
+        
+        # always increment frame index
+        frame_index += 1
+
+    return frames_saved
+
+
+def extract_frames(output_frames_base_path, media_file, ssmi_threshold, use_static_sample_rate):
     """
     Extracts frames from a video, animated GIF, or processes a single image file.
 
@@ -105,7 +269,6 @@ def extract_frames(output_frames_base_path, media_file):
         - GIFs do not have a fixed FPS like videos; instead, they store frame durations, which can vary per frame.
         - If no frames are successfully saved, the created output directory is deleted.
 
-
     Output Directory Structure:
         output_frames_base_path/
         ├── example_video__frames/
@@ -125,110 +288,20 @@ def extract_frames(output_frames_base_path, media_file):
     output_frames_media_path = os.path.join(output_frames_base_path, f"{name_without_ext}__frames")
     os.makedirs(output_frames_media_path, exist_ok=True)
     
-    # Determine if input is a video, animated GIF, or static image
-    video_extensions = {'.mp4', '.avi', '.mov', '.mkv', '.flv', '.wmv'}
-    image_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.webp'}
-    gif_extension = '.gif'
-    extension = os.path.splitext(media_file)[1].lower()
+    file_type = get_file_type_from_extension(media_file)
     
-    if extension in image_extensions:
-        # Handle static image case
-        frame_filename = "frame_0-00-00_0-00-00.jpg"
-        frame_path = os.path.join(output_frames_media_path, frame_filename)
-        shutil.copy(media_file, frame_path)
-        print(f"Saved image as frame: {frame_path}")
-        return
+    if file_type == "image":
+        total_saved_frames = extract_frames_from_image(output_frames_media_path, media_file)
+        return total_saved_frames
     
-    elif extension in video_extensions:
-        # Handle video case
-        print(f"\n\nExtracting frames from {media_file}...")
-        saved_frames = 0
-        cap = open_video(media_file)
-        print("cap:", cap)
-        if cap:
-            fps = cap.get(cv2.CAP_PROP_FPS)
-            frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-            duration = frame_count / fps
-
-            print(f"Video FPS: {fps}")
-            print(f"Total Frames: {frame_count}")
-            print(f"Video Duration: {timedelta(seconds=duration)}")
-
-            sampling_interval = 2  # Extract a frame every 2 seconds
-            frame_interval = round(fps * sampling_interval)  # Force rounding to nearest integer frame count
-
-            print(f"Extracting every {frame_interval} frames ({sampling_interval} seconds interval)")
-            
-            frame_index = 0
-
-            while frame_index < frame_count:
-                print(f"Processing frame {frame_index} / {frame_count}")
-                cap.set(cv2.CAP_PROP_POS_FRAMES, min(frame_index, frame_count - 1))
-                ret, frame = cap.read()
-                
-                if not ret:
-                    print(f"Warning: Could not read frame at index {frame_index}. Skipping...")
-                    break
-
-                timestamp = round(frame_index / fps, 2)
-                start_time = str(timedelta(seconds=int(timestamp)))
-                end_time = str(timedelta(seconds=int(timestamp + sampling_interval)))
-
-                frame_filename = f"frame_{start_time.replace(':', '-')}_{end_time.replace(':', '-')}.jpg"
-                frame_path = os.path.join(output_frames_media_path, frame_filename)
-                
-                if cv2.imwrite(frame_path, frame):
-                    print(f"Saved: {frame_path}")
-                    saved_frames += 1
-                else:
-                    warnings.warn(f"Error saving: {frame_filename}")
-
-                frame_index += frame_interval
-                if frame_index >= frame_count:
-                    print("Reached the last frame, stopping extraction.")
-                    break
-
-            cap.release()
-        
-        if saved_frames == 0:
-            os.rmdir(output_frames_media_path)
-            print(f"Removed empty output directory: {output_frames_media_path}")
-        else:
-            print(f"Frames saved: {saved_frames} in {output_frames_media_path}")
-        return
+    elif file_type == "video":
+        total_saved_frames = extract_frames_from_video(output_frames_media_path, media_file, ssmi_threshold, use_static_sample_rate)
+        return total_saved_frames
     
-    elif extension == gif_extension:
-        # TODO - rn this gets every other frame from GIFs - overkill - make it smarter
-        # Handle animated GIF case - in the Pillow (PIL) package, a GIF is considered an image
-        print(f"\n\nExtracting frames from animated GIF: {media_file}...")
-        gif = open_gif(media_file)
-        frame_index = 0
-
-        while True:
-            print("\n\nframe_index: {frame_index}")
-            # awkward here... trying to force format timestamp format.
-            # May cause errors if there are more than 99 frames in a gif...
-            if frame_index <= 9:
-                frame_index_formatted = f"0{str(frame_index)}"
-            else:
-                frame_index_formatted = str(frame_index)
-            
-            # only process first then everyother frame
-            is_even_or_zero = frame_index % 2 == 0
-            if is_even_or_zero:
-                print("PROCESSING {} since is_even_or_zero...")
-                frame_filename = f"frame_00-00-{frame_index_formatted}_00-00-{frame_index_formatted}.jpg"
-                frame_path = os.path.join(output_frames_media_path, frame_filename)
-                gif.seek(frame_index)
-                gif.convert("RGB").save(frame_path)
-                print(f"Saved: {frame_path}")
-            frame_index += 1
-
-            try:
-                gif.seek(frame_index)
-            except EOFError:
-                break
-        return
+    elif file_type == "gif":
+        total_saved_frames = extract_frames_from_gif(output_frames_media_path, media_file, ssmi_threshold, use_static_sample_rate)
+        return total_saved_frames
+    
     else:
         raise ValueError(f"Unsupported file type: {media_file}")
 
@@ -291,7 +364,6 @@ def get_valid_media_files(full_path_input_dir):
         return
     
     print(f"\nTotal input media files {len(media_files)} \n\nStarting processing...")
-
     return media_files
 
 def create_output_dir():
@@ -316,7 +388,7 @@ def create_output_dir():
     return full_path_output_dir
 
 
-def main_extract_frames(input_dir):
+def main_extract_frames(input_dir, similarity, use_static_sample_rate=False):
     """
     Extracts frames from all valid video files in the specified input directory.
 
@@ -355,6 +427,7 @@ def main_extract_frames(input_dir):
         - Creates necessary directories if they don’t exist.
     """
 
+
     # Ensure `input_dir` is an absolute path
     if not os.path.isabs(input_dir):
         base_path = os.getcwd()
@@ -369,10 +442,25 @@ def main_extract_frames(input_dir):
 
     full_path_output_dir = create_output_dir()
 
-    # Run frame extraction
-    for media_file_path in media_file_paths:
-        print(f"\nExtracting frames from: {media_file_path}")
-        extract_frames(full_path_output_dir, media_file_path)
+    ssmi_threshold = SSIM_THRESHOLDS[similarity]
+
+
+    # Run frame extraction in parallel
+    with ProcessPoolExecutor(max_workers=3) as executor:
+        # Submit all jobs to the executor
+        futures = {
+            executor.submit(extract_frames, full_path_output_dir, media_file_path, ssmi_threshold, use_static_sample_rate): media_file_path
+            for media_file_path in media_file_paths
+        }
+
+        # Monitor completion
+        for future in as_completed(futures):
+            media_file = futures[future]
+            try:
+                future.result()
+                print(f"✅ Done: {media_file}")
+            except Exception as e:
+                print(f"❌ Failed: {media_file} — {e}")
 
     print("\nFrame extraction complete.")
 
