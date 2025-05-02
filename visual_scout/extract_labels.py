@@ -4,8 +4,8 @@ import time
 from dotenv import load_dotenv
 import openai
 import warnings 
-from visual_scout.image_utils import extract_timestamps, validate_filenames
-from visual_scout.openai_utils import get_label_gen_prompt
+from visual_scout.utils.image_utils import extract_timestamps, validate_filenames
+from visual_scout.utils.openai_utils import get_label_gen_prompt
 
 
 def get_openai_labels(prompt, open_ai_key, open_ai_model):

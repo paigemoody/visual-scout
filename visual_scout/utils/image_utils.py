@@ -2,6 +2,18 @@ import os
 import re
 import base64
 import sys
+import cv2
+from datetime import timedelta
+import warnings
+import shutil
+from PIL import Image, UnidentifiedImageError
+
+
+def save_image_to_disk(image, path):
+    if cv2.imwrite(path, image):
+        print(f"Saved: {path}")
+    else:
+        warnings.warn(f"Error saving: {path}")
 
 
 def encode_image_to_base64(image_path):
@@ -20,9 +32,9 @@ def extract_timestamps(filename):
     Returns None if no timestamps are found.
     """
     # Regex for filenames with timestamps (e.g., grid_0-00-00_0-00-18.jpg)
-    TIMESTAMP_PATTERN = re.compile(r'(\d{1,2}-\d{2}-\d{2})_(\d{1,2}-\d{2}-\d{2})')
+    TIMESTAMP_PATTERN = re.compile(r"(\d{1,2}-\d{2}-\d{2})_(\d{1,2}-\d{2}-\d{2})")
     match = TIMESTAMP_PATTERN.search(filename)
-    
+
     groups = match.groups() if match else None
     return groups
 
@@ -36,7 +48,9 @@ def validate_filenames(input_dir):
 
     for root, _, files in os.walk(input_dir):
         for file in files:
-            if file.lower().endswith((".jpg", ".jpeg", ".png")) and not extract_timestamps(file):
+            if file.lower().endswith(
+                (".jpg", ".jpeg", ".png")
+            ) and not extract_timestamps(file):
                 invalid_files.append(os.path.join(root, file))
 
     if invalid_files:

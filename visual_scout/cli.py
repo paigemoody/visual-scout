@@ -3,6 +3,7 @@ from visual_scout.extract_frames import main_extract_frames
 from visual_scout.extract_labels import get_labels_main
 from visual_scout.generate_grids import main_generate_grids
 from visual_scout.estimate_processing_cost import estimate_processing_cost
+from visual_scout.generate_grids_from_source import main_generate_grids_from_media
 from visual_scout.constants import SSIM_THRESHOLDS, SAMPLING_INTERVAL
 
 def main():
@@ -23,9 +24,20 @@ def main():
     parser_extract.set_defaults(func=lambda args: main_extract_frames(args.input_dir, args.similarity, args.use_static_sample_rate))
 
     # Generate Grids
+    # TODO - rename this generate-grids-from-frames
     parser_grids = subparsers.add_parser("generate-grids", help="Generate image grids from extracted frames")
     parser_grids.add_argument("--grid-size", type=int, default=3, help="Grid dimension (NxN), default is 3x3")
     parser_grids.set_defaults(func=lambda args: main_generate_grids(args.grid_size))
+
+    # Generate Grids Directly from Media
+    # TODO - rename this generate-grids
+    parser_grids_media = subparsers.add_parser("generate-grids-from-media", help="Generate image grids directly from media files")
+    parser_grids_media.add_argument("input_dir", type=str, help="Path to the directory containing media files")
+    parser_grids_media.add_argument("--grid-size", type=int, default=3, help="Grid dimension (NxN), default is 3x3")
+    parser_grids_media.add_argument("--similarity", default="default", choices=list(SSIM_THRESHOLDS.keys()), type=str, help="How strict should we be when determining if two frames are similar? (strict, loose)")
+    parser_grids_media.add_argument("--use-static-sample-rate", action="store_true", help="Use fixed interval frame extraction without similarity filtering", default=False)
+    parser_grids_media.set_defaults(func=lambda args: main_generate_grids_from_media(args.input_dir, args.grid_size, args.similarity, args.use_static_sample_rate))
+
 
     # Process Visual Content (generate labels)
     parser_process = subparsers.add_parser("generate-labels", help="Process image grids to generate labels")

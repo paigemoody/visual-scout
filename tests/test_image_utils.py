@@ -2,7 +2,7 @@ import unittest
 import os
 import tempfile
 import base64
-from visual_scout.image_utils import (
+from visual_scout.utils.image_utils import (
     encode_image_to_base64,
     extract_timestamps,
     validate_filenames
