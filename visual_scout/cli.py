@@ -24,11 +24,13 @@ def main():
     parser_extract.set_defaults(func=lambda args: main_extract_frames(args.input_dir, args.similarity, args.use_static_sample_rate))
 
     # Generate Grids
+    # TODO - rename this generate-grids-from-frames
     parser_grids = subparsers.add_parser("generate-grids", help="Generate image grids from extracted frames")
     parser_grids.add_argument("--grid-size", type=int, default=3, help="Grid dimension (NxN), default is 3x3")
     parser_grids.set_defaults(func=lambda args: main_generate_grids(args.grid_size))
 
     # Generate Grids Directly from Media
+    # TODO - rename this generate-grids
     parser_grids_media = subparsers.add_parser("generate-grids-from-media", help="Generate image grids directly from media files")
     parser_grids_media.add_argument("input_dir", type=str, help="Path to the directory containing media files")
     parser_grids_media.add_argument("--grid-size", type=int, default=3, help="Grid dimension (NxN), default is 3x3")
