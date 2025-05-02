@@ -94,21 +94,60 @@ def get_file_type_from_extension(media_file):
 
 
 def extract_frames_from_image(output_frames_media_path, media_file):
-    # Handle static image case
+    # TO DO: return frame object
+    """
+    Handle static image input by saving it as a single frame in the expected format.
+
+    This function is used when the input media is a single image rather than a video.
+    It copies the image to the target output directory using a standardized frame filename 
+    to ensure consistency with how video frames are stored.
+
+    Args:
+        output_frames_media_path (str): Directory where the frame should be saved.
+        media_file (str): Path to the input image file.
+
+    Returns:
+        int: Number of frames saved (always 1 for static images).
+    """
+    # Log the image being processed
     print(f"\n\nExtracting frames from image {media_file}...")
+
+    # Define standard frame filename (matches video frame naming pattern)
     frame_filename = "frame_0-00-00_0-00-00.jpg"
     frame_path = os.path.join(output_frames_media_path, frame_filename)
+
+    # Copy the static image to the output location
     shutil.copy(media_file, frame_path)
     print(f"Saved image as frame: {frame_path}")
-    return 1
+
+    return 1  # Total frames saved
+
 
 
 def extract_frames_from_video(output_frames_media_path, media_file, ssmi_threshold, use_static_sample_rate):
-    # Handle video case
+    """
+    Extracts frames from a video file at regular intervals, with optional similarity-based filtering.
+
+    This function processes a video by sampling frames every N seconds (defined by `SAMPLING_INTERVAL`).
+    If `use_static_sample_rate` is False, frames are only saved if they differ significantly from the 
+    previously saved frame, using SSIM (Structural Similarity Index) comparison.
+
+    Args:
+        output_frames_media_path (str): Directory where extracted frames will be saved.
+        media_file (str): Path to the input video file.
+        ssmi_threshold (float): SSIM threshold below which frames are considered different enough to save.
+        use_static_sample_rate (bool): If True, saves every sampled frame; if False, only saves visually distinct frames.
+
+    Returns:
+        int: The number of frames successfully saved.
+    """
     print(f"\n\nExtracting frames from video {media_file}...")
+    
     saved_frames = 0
+
     cap = open_video(media_file)
     if cap:
+        # get basic video properties
         fps = cap.get(cv2.CAP_PROP_FPS)
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         duration = frame_count / fps
@@ -117,33 +156,58 @@ def extract_frames_from_video(output_frames_media_path, media_file, ssmi_thresho
         print(f"Total Frames: {frame_count}")
         print(f"Video Duration: {timedelta(seconds=duration)}")
 
-        sampling_interval = SAMPLING_INTERVAL  # Extract a frame every 2 seconds
-        frame_interval = round(fps * sampling_interval)  # Force rounding to nearest integer frame count
+        # Determine how often to sample frames (e.g., every 2 seconds)
+        # TODO: pass sampling interval in to fn, rather than use global
+        sampling_interval = SAMPLING_INTERVAL
+        frame_interval = round(fps * SAMPLING_INTERVAL)  # Convert seconds to frame count
 
-        print(f"Extracting every frames at {sampling_interval} seconds interval")
+        print(f"Extracting frames every {sampling_interval} seconds")
+
         frame_index = 0
-        most_recently_saved_frame = (None, None)
+        most_recently_saved_frame = (None, None)  # (frame_path, frame_image)
+
+        # iterate through video by jumping in intervals
         while frame_index < frame_count:
             print(f"\n\nProcessing frame {frame_index} / {frame_count}")
-            cap.set(cv2.CAP_PROP_POS_FRAMES, min(frame_index, frame_count - 1))
+            # ensure we don’t request a frame index beyond the last valid frame
+            target_frame_index = min(frame_index, frame_count - 1)
+            # move the video cursor to the target frame
+            cap.set(cv2.CAP_PROP_POS_FRAMES, target_frame_index)
+            # attempt to read the frame at the current position
             ret, frame = cap.read()
             
             if not ret:
                 print(f"Warning: Could not read frame at index {frame_index}. Skipping...")
                 break
 
-            timestamp = round(frame_index / fps, 2)
-            start_time = str(timedelta(seconds=int(timestamp)))
-            end_time = str(timedelta(seconds=int(timestamp + sampling_interval)))
+            
 
-            frame_filename = f"frame_{start_time.replace(':', '-')}_{end_time.replace(':', '-')}.jpg"
-            frame_path = os.path.join(output_frames_media_path, frame_filename)
-
-            # see if current frame is substantially different from the previoiusly saved frame, if use_static_sample_rate is false
+            # Determine whether to skip this frame based on similarity (if enabled)
             new_frame_similar_to_previous_frame = False
             if not use_static_sample_rate:
-                new_frame_similar_to_previous_frame = get_frame_similarity_ssim(most_recently_saved_frame[1], frame, ssmi_threshold)
-            
+                new_frame_similar_to_previous_frame = get_frame_similarity_ssim(
+                    most_recently_saved_frame[1], frame, ssmi_threshold
+                )
+
+            # generate readable timestamp-based filename
+
+            # calculate the timestamp (in seconds) for the current frame
+            timestamp = round(frame_index / fps, 2)
+
+            # format the start time of the frame (e.g., '0:00:10') as a string
+            start_time = str(timedelta(seconds=int(timestamp)))
+
+            # calculate and format the end time based on the sampling interval
+            end_time = str(timedelta(seconds=int(timestamp + SAMPLING_INTERVAL)))
+
+            # generate a filename using the start and end times, replacing colons with dashes
+            # eg: "frame_0-00-10_0-00-12.jpg"
+            frame_filename = f"frame_{start_time.replace(':', '-')}_{end_time.replace(':', '-')}.jpg"
+
+            # build the full path where the frame image will be saved
+            frame_path = os.path.join(output_frames_media_path, frame_filename)
+
+            # Save frame if it's different enough or static sampling is used
             if most_recently_saved_frame is None or not new_frame_similar_to_previous_frame:
                 if cv2.imwrite(frame_path, frame):
                     print(f"Saved: {frame_path}")
@@ -151,22 +215,25 @@ def extract_frames_from_video(output_frames_media_path, media_file, ssmi_thresho
                     most_recently_saved_frame = (frame_path, frame)
                 else:
                     warnings.warn(f"Error saving: {frame_filename}")
-            
             else:
-                print(f"\nSKIPPING {frame_path}")
+                print(f"\nSKIPPING {frame_path} (too similar to previous frame)")
 
+            # Advance to the next sampling point
             frame_index += frame_interval
             if frame_index >= frame_count:
                 break
 
         cap.release()
-    
+
+    # Cleanup: remove empty output dir if no frames saved
     if saved_frames == 0:
         os.rmdir(output_frames_media_path)
         print(f"Removed empty output directory: {output_frames_media_path}")
     else:
         print(f"Frames saved: {saved_frames} in {output_frames_media_path}")
+
     return saved_frames
+
 
 
 def extract_frames_from_gif(output_frames_media_path, media_file, ssmi_threshold, use_static_sample_rate):
