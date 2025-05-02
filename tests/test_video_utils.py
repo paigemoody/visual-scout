@@ -4,7 +4,7 @@ import cv2
 import re
 from datetime import timedelta
 
-from visual_scout.video_utils import inspect_video, natural_sort_key, get_image_files
+from visual_scout.utils.video_utils import inspect_video, natural_sort_key, get_image_files
 
 class TestVideoUtils(unittest.TestCase):
 

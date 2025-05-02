@@ -9,7 +9,7 @@ from visual_scout.extract_labels import (
     get_openai_labels,
     get_labels_main,
 )
-from visual_scout.image_utils import extract_timestamps
+from visual_scout.utils.image_utils import extract_timestamps
 
 
 class TestExtractLabels(unittest.TestCase):

@@ -1,8 +1,8 @@
 import os
 from PIL import Image
 from math import ceil, sqrt
-from visual_scout.image_utils import extract_timestamps
-from visual_scout.video_utils import get_image_files
+from visual_scout.utils.image_utils import extract_timestamps
+from visual_scout.utils.video_utils import get_image_files
 
 
 def create_grid(images, frame_width, frame_height, grid_dimension):

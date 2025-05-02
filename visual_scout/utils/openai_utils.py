@@ -1,4 +1,4 @@
-from visual_scout.image_utils import encode_image_to_base64
+from visual_scout.utils.image_utils import encode_image_to_base64
 
 PROMPT = """
 
@@ -44,6 +44,7 @@ PROMPT = """
     ]
     }
     """
+
 
 def get_label_gen_prompt(image_path):
     """Generate the OpenAI prompt for image labeling."""

@@ -5,7 +5,6 @@ import tempfile
 import unittest
 from unittest.mock import patch
 from visual_scout.extract_frames import (
-    create_output_dir,
     extract_frames,
     extract_frames_from_gif,
     extract_frames_from_image,
@@ -13,7 +12,9 @@ from visual_scout.extract_frames import (
     get_file_type_from_extension,
     get_valid_media_files,
     open_video,
+    save_image_to_disk
 )
+from visual_scout.utils.frame_utils import create_output_dir
 
 
 class TestExtractFrames(unittest.TestCase):
@@ -290,8 +291,8 @@ class TestExtractFramesFromImage(unittest.TestCase):
         shutil.rmtree(self.temp_dir)
 
     def test_extract_frames_from_image(self):
-        count = extract_frames_from_image(self.temp_dir, self.image_path)
-        self.assertEqual(count, 1)
+        img_lst = extract_frames_from_image(self.temp_dir, self.image_path, save_image_to_disk)
+        self.assertEqual(len(img_lst), 1)
         files = os.listdir(self.temp_dir)
         self.assertEqual(len(files), 1)
         self.assertTrue(files[0].endswith(".jpg"))
@@ -311,10 +312,11 @@ class TestExtractFramesFromGif(unittest.TestCase):
         shutil.rmtree(self.temp_dir)
 
     def test_extract_frames_from_gif(self):
-        count = extract_frames_from_gif(self.temp_dir, self.gif_path, .6, False)
-        self.assertGreater(count, 0)
+        frames_lst = extract_frames_from_gif(self.temp_dir, self.gif_path, .6, False, save_image_to_disk)
+        expected_frames_saved_count = len(frames_lst)
+        self.assertGreater(expected_frames_saved_count, 0)
         saved_files = [f for f in os.listdir(self.temp_dir) if f.endswith(".jpg")]
-        self.assertEqual(count, len(saved_files))
+        self.assertEqual(expected_frames_saved_count, len(saved_files))
 
 
 class TestCreateOutputDir(unittest.TestCase):
